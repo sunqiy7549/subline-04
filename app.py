@@ -49,7 +49,8 @@ def translate_text(text, target='ko'):
     try:
         return GoogleTranslator(source='auto', target=target).translate(text)
     except Exception as e:
-        logging.error(f"Translation error: {e}")
+        # Log error but don't crash - return original text as fallback
+        logging.error(f"Translation failed for {text[:50]!r}...: {e}")
         return text
 
 def fetch_guangxi_article_with_playwright(url):
