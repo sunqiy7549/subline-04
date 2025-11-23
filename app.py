@@ -709,5 +709,5 @@ def get_news(source_key):
 
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5001)

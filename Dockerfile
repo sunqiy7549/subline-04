@@ -25,4 +25,4 @@ EXPOSE 5001
 ENV PYTHONUNBUFFERED=1
 
 # Command to run the application
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--workers", "4", "--bind", "127.0.0.1:5001", "app:app"]
