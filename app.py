@@ -43,6 +43,7 @@ from playwright.sync_api import sync_playwright
 from utils.fetcher import fetch_html
 from sources.gzdaily import gzdaily_index_url, gzdaily_section_url
 from sources.nfdaily import nfdaily_section_url, nfdaily_article_url
+from sources.nanfang_live import fetch_nanfang_articles
 
 def translate_text(text, target='ko'):
     try:
@@ -479,58 +480,43 @@ def get_news(source_key):
             source_name = "南方日报"
             
             try:
-                # Use direct section URLs to avoid JS redirect issues
+                # Use the verified parser from nanfang_live module
                 logging.info(f"Fetching Nanfang Daily for date: {current_date}")
                 
-                # Try sections A01-A12
+                # Try sections A01-A12 using the verified parser
                 for section_num in range(1, 13):
                     section_code = f"A{section_num:02d}"
                     
                     try:
-                        # Use direct section URL generator
-                        section_url = nfdaily_section_url(current_date, section_code)
+                        # Use the verified fetch_nanfang_articles function
+                        raw_articles = fetch_nanfang_articles(current_date, section=section_code)
                         
-                        html = fetch_html(section_url)
-                        
-                        # DEBUG: Log first section's HTML to verify content (only for A01)
+                        # DEBUG: Log results for A01
                         if section_code == "A01":
-                            logging.info(f"Nanfang Daily A01 HTML first 300 chars: {html[:300]!r}")
-                        soup = BeautifulSoup(html, 'html.parser')
+                            logging.info(f"Nanfang Daily A01: found {len(raw_articles)} articles via verified parser")
                         
-                        # Find section name
+                        # Convert to our format and translate
                         section_name = f"第{section_code}版"
-                        
-                        # Find article links with href containing 'content_'
-                        article_links = soup.select('a[href*="content_"]')
-                        
-                        for link in article_links:
-                            title = link.get_text(strip=True)
-                            href = link.get('href')
+                        for item in raw_articles:
+                            title = item['title']
+                            url = item['url']
                             
-                            if href and title and len(title) > 3:
-                                # Build absolute URL for article
-                                if href.startswith('http'):
-                                    abs_link = href
-                                else:
-                                    # Use the article URL generator
-                                    abs_link = nfdaily_article_url(current_date, href.replace('.html', ''))
-                                
-                                # Translate title
-                                title_ko = translate_text(title)
-                                
-                                all_news_items.append({
-                                    'title': title,
-                                    'title_ko': title_ko,
-                                    'link': abs_link,
-                                    'section': section_name
-                                })
+                            # Translate title
+                            title_ko = translate_text(title)
+                            
+                            all_news_items.append({
+                                'title': title,
+                                'title_ko': title_ko,
+                                'link': url,
+                                'section': section_name
+                            })
                     except Exception as e:
                         # 404 is expected for non-existent sections
                         if "404" not in str(e):
                             logging.error(f"Error fetching Nanfang section {section_code}: {e}")
                         continue
                 
-                logging.info(f"Nanfang Daily: found {len(all_news_items)} articles")
+                logging.info(f"Nanfang Daily: found {len(all_news_items)} articles (verified parser)")
                 
             except Exception as e:
                 logging.error(f"Error fetching Nanfang Daily: {e}")
