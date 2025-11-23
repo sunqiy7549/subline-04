@@ -46,12 +46,13 @@ from sources.nfdaily import nfdaily_section_url, nfdaily_article_url
 from sources.nanfang_live import fetch_nanfang_articles
 
 def translate_text(text, target='ko'):
-    try:
-        return GoogleTranslator(source='auto', target=target).translate(text)
-    except Exception as e:
-        # Log error but don't crash - return original text as fallback
-        logging.error(f"Translation failed for {text[:50]!r}...: {e}")
-        return text
+    """
+    暂时关闭后端翻译，直接返回原文，避免外网访问导致 worker 超时。
+    以后如果要恢复翻译，可以在这里换成别的实现（比如 OpenAI API）。
+    """
+    # Translation disabled to prevent timeout issues
+    # logger.debug("Translation disabled, returning original text")
+    return text
 
 def fetch_guangxi_article_with_playwright(url):
     """Fetch Guangxi Daily article using Playwright to execute JavaScript."""
