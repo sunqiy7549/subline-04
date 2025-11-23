@@ -1,9 +1,11 @@
 from datetime import date
 from urllib.parse import urljoin
+import logging
 
 import requests
 from bs4 import BeautifulSoup
 
+logger = logging.getLogger(__name__)
 
 HEADERS = {
     "User-Agent": (
@@ -30,32 +32,39 @@ def fetch_html(url: str) -> str:
     return resp.text
 
 
-def parse_nanfang_node(html: str, base_url: str):
+def parse_nanfang_node(html: str, base_url: str, section: str = "A01"):
     """
     解析 node_A01.html 这种版面页，返回 [ {title, url}, ... ]
     """
     soup = BeautifulSoup(html, "lxml")
     results = []
 
-    # 优先找"第A01版"这一块
+    # 动态查找对应版面，例如 "第A01版"、"第A02版" 等
+    section_title = f"第{section}版"
+    
+    # 优先找对应版面的标题
     h3 = None
     for candidate in soup.find_all(["h3", "h2"]):
         text = candidate.get_text(strip=True)
-        if text.startswith("第A01版"):
+        if text.startswith(section_title):
             h3 = candidate
+            logger.debug(f"Found section header: {text}")
             break
 
     if h3 is not None:
         ul = h3.find_next("ul")
     else:
-        # 如果没找到"第A01版"，退而求其次：找包含"标题导航"的块附近的第一个 <ul>
+        # 如果没找到版面标题，退而求其次：找包含"标题导航"的块附近的第一个 <ul>
         nav_label = soup.find(string=lambda t: t and "标题导航" in t)
         if nav_label:
             ul = soup.find("ul")
+            logger.debug("Using fallback: found 标题导航")
         else:
             ul = None
+            logger.warning(f"Could not find section {section_title} or 标题导航")
 
     if not ul:
+        logger.warning(f"No <ul> found for section {section}")
         return results
 
     for li in ul.find_all("li"):
@@ -71,6 +80,7 @@ def parse_nanfang_node(html: str, base_url: str):
         full_url = urljoin(base_url, href)
         results.append({"title": title, "url": full_url})
 
+    logger.info(f"Parsed {len(results)} articles from section {section}")
     return results
 
 
@@ -79,5 +89,12 @@ def fetch_nanfang_articles(d: date, section: str = "A01"):
     对外暴露的统一接口：给定日期 -> 返回该版面文章列表
     """
     url = build_node_url(d, section=section)
-    html = fetch_html(url)
-    return parse_nanfang_node(html, base_url=url)
+    logger.info(f"Fetching Nanfang Daily {section}: {url}")
+    
+    try:
+        html = fetch_html(url)
+        logger.debug(f"Fetched HTML for {section}, length: {len(html)}, first 200 chars: {html[:200]!r}")
+        return parse_nanfang_node(html, base_url=url, section=section)
+    except Exception as e:
+        logger.error(f"Error fetching Nanfang {section}: {e}")
+        raise
