@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <title>广西日报数字报刊</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta content="width=device-width" name="viewport" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="./img/apple-touch-icon.png" />
+  <link rel="icon" href="https://bookingmaster.gxrb.com.cn/front/2022/2022parper/img/favicon.png">
+  <link href="../css/swiper.min.css?f=17" rel="stylesheet" type="text/css" />
+  <link href="../css/base.css?f=17" rel="stylesheet" type="text/css" />
+  <link href="../css/css.css?f=17" rel="stylesheet" type="text/css" />
+  <link href="../css/biankuang1.css?f=17" rel="stylesheet" type="text/css" />
+  <link href="../css/style.css?f=17" rel="stylesheet" type="text/css" />
+  <!--[if lt IE 11]>
+      <script src="https://bookingmaster.gxrb.com.cn/front/2022/2022parper/js/es5-sham.min.js"></script>
+      <script src="https://bookingmaster.gxrb.com.cn/front/2022/2022parper/js/es5-shim.min.js"></script>
+    <![endif]-->
+  <script src="../js/polyfill.min.js"></script>
+  <script>
+    function getUrlParams() {
+      const params = {};
+      const queryString = window.location.search.slice(1);
+      console.log(queryString)
+      return queryString;
+    }
+
+    function isMobileDevice() {
+      const userAgent = navigator.userAgent;
+      const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+      return mobileRegex.test(userAgent);
+    }
+
+    const params = getUrlParams();
+    if (isMobileDevice()) {
+      window.location.href = `https://ssw.gxrb.com.cn/json/interface/epaper/api.php?${params}`;
+    }
+  </script>
+</head>
+
+<body data-name="gxrb" background="./img/index_r1_c1.jpg"
+  style="background-repeat: repeat-x; background-color: #f6f6f6">
+  <div id="wrap">
+    <!-- 左侧内容 start -->
+    <div id="left">
+      <div id="logo">
+        <map name="pagepicmap" id="pagepicmap">
+          <area shape="rect" coords="57,21,326,164" href="https://gxrb.gxrb.com.cn" target="_self" />
+        </map>
+        <img src="./img/index_r1_c4.jpg" alt="" name="index_r1_c4" width="350" height="199" border="0"
+          usemap="#pagepicmap" id="index_r1_c3" />
+      </div>
+      <div id="paper" align="center" class="imgbox">
+        <img src="./img/loading.png" class="loading" alt="" />
+        <div style="display: none" id="hiddenS1"></div>
+        <div class="swiper-container mySwiper">
+          <div class="swiper-wrapper">
+            <!--报纸版面 -->
+          </div>
+        </div>
+      </div>
+      <div id="paper_b1" class="fs12 white lh24">
+        <table width="350" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td width="60" height="26" class="white fs12" align="center" valign="middle" id="pname"></td>
+              <td width="110" height="26" class="white fs12" valign="middle"></td>
+              <td width="140" align="center" valign="middle" class="white fs12">
+                <table width="100%" border="0">
+                  <tbody>
+                    <tr>
+                      <td nowrap="" width="50%" class="px12">
+                        <div class="swiper-button-prev swiper-button-disabled">
+                          <a href="">上一版</a>
+                        </div>
+                      </td>
+                      <td nowrap="" width="50%" class="px12">
+                        <div class="swiper-button-next swiper-button-disabled">
+                          <a href="">下一版</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+
+              <td width="40" align="center" valign="middle" class="white fs12">
+                <a id="pptf" title="PDF下载"><img src="./img/pdf.gif" border="0" /></a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="paper_b2">
+        <img name="index_r14_c4" src="./img/index_r14_c4.jpg" width="350" height="22" border="0" id="index_r14_c"
+          alt="" />
+      </div>
+    </div>
+    <!-- 左侧内容 end -->
+
+    <!-- 右侧内容 start -->
+    <div id="right">
+      <!-- 导航列表 start -->
+      <div id="top_nav" style="background: url(./img/index_r1_c9.jpg)">
+        <font style="padding-left: 170px" class="fs14 lh24"><a href="http://szbk.gxnews.com.cn/"
+            target="_self">数字报首页</a>
+          <a href="https://gxrb.gxrb.com.cn" target="_self">广西日报</a>
+          <a href="https://ngzb.gxrb.com.cn" target="_self">南国早报</a>
+          <a href="https://ddshb.gxrb.com.cn" target="_self">当代生活报</a>
+        </font><br />
+        <font style="padding-left: 170px; padding-bottom: 20px" class="fs14 lh24"><a href="https://ngjb.gxrb.com.cn"
+            target="_self">南国今报</a>
+          <a href="https://ngcb.gxrb.com.cn" target="_self">南国城报</a>
+          <!-- <a href="http://epaper.gxrb.com.cn/jb" target="_self">健报</a> -->
+          <a href="https://gxpic.gxrb.com.cn/" target="_blank">广西画报</a>
+          <a href="http://www.gxnews.com.cn" target="_blank">广西新闻网</a>
+        </font>
+      </div>
+      <!-- 导航列表 end -->
+
+      <!-- 广告版面 start -->
+      <div id="ad1">
+        <img src="./img/ngzb_szb_tu00.gif" width="470" height="90" />
+      </div>
+      <!-- 广告版面 end -->
+
+      <!-- 日期 翻期日 start -->
+      <div style="padding-top: 30px">
+        <table width="380" border="0" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <!-- 最新日期 2022年3月24日 -->
+              <td width="250"><span id="date"></span></td>
+              <td width="130" align="right">
+                <table width="100%" border="0">
+                  <tbody>
+                    <tr>
+                      <td nowrap="" width="50%" class="px12">
+                        <div id="qiPrev" class="preart black1 swiper-button-disabled">
+                          &lt;&nbsp;<a href="">上一期</a>
+                        </div>
+                      </td>
+                      <td nowrap="" width="50%" class="px12">
+                        <div id="qiNext" class="preart black1 swiper-button-disabled">
+                          <a href="">下一期&nbsp;&gt;</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 日期 翻期日 end -->
+
+      <!-- 查找 start -->
+      <div class="seac">
+        <div class="share-wrap share-wrap1">
+          <div class="icon-s">
+            <span class="icon"><img class="normal" src="./img/icon1.png" alt="" />
+              <!-- <img class="normal" src="./img/icon.png" alt=""/> -->
+            </span>
+            <p>分享</p>
+          </div>
+          <div class="more">
+            <a class="txt link">
+              <span><img src="./img/link.png" alt="" /></span>
+              <span>复制链接</span>
+            </a>
+            <a class="txt weibo social-share">
+              <span><img src="./img/wb.png" alt="" /></span>
+              <span>新浪微博</span>
+            </a>
+            <a class="txt weixin">
+              <span><img src="./img/wx.png" alt="" /></span>
+              <span>微信扫一扫</span>
+            </a>
+            <div class="qrcode"></div>
+          </div>
+        </div>
+        <form name="formqb" action="http://zhannei.baidu.com/cse/search?s=7395986239519321881&amp;nsid=1" method="post"
+          target="_blank">
+          <div id="nav">
+            <script language="JavaScript">
+              docWidth = document.body.clientWidth
+              AddLeft = (docWidth - 960) / 2
+              Setleft = AddLeft > 0 ? AddLeft + 450 : 450
+              leftvar = Setleft + 'px'
+              dhvar = Setleft + 'px'
+            </script>
+            <a onmouseover="getElementById('schedule').style.left=leftvar;getElementById('schedule').style.top='290px';getElementById('schedule').style.display='block';"
+              onclick="getElementById('schedule').style.display=(getElementById('schedule').style.display=='block'?'none':'block');"
+              href="#">
+              <font class="black1">按日期查找</font>
+            </a>
+            <span class="black1 fs12"><a id="nowNav">本版导航</a></span>
+            <div class="inline" onmouseout="getElementById('banmian').style.display='none';"
+              onmouseover="getElementById('banmian').style.display='block';">
+              <a href="#">
+                <font class="black1">版面导航</font>
+              </a>
+              <!--版面导航开始-->
+              <div id="banmian">
+                <ul></ul>
+              </div>
+              <!--版面导航结束-->
+            </div>
+
+            <input class="black1" onblur="if (value ==''){value='请输入关键字'}" onmouseover="this.focus()"
+              onfocus="this.select()" onclick="if(this.value=='请输入关键字') this.value=''" size="20" value="请输入关键字"
+              name="word" maxlenth="20" />
+            <input type="hidden" name="year" value="20" />
+            <input type="hidden" name="month" value="20" />
+            <input type="hidden" name="day" value="20" />
+            <input type="hidden" value="newgx" name="webid" />
+            <input type="hidden" value="con" name="selectact" />
+            <a href="#" onclick="qbcheckform(formqb);">
+              <font class="black1">搜索</font>
+            </a>
+          </div>
+        </form>
+      </div>
+      <!-- 查找 start -->
+
+      <!-- 当前版主要新闻列表 -->
+      <div class="newsMenu">
+        <table width="200" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td height="28" background="./img/index_r7_c15.jpg">
+                <div style="padding-left: 33px" class="white fs14">
+                  第 <span id="cname"></span> 版主要新闻
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 当前版主要新闻 -->
+      <div id="right_news1" class="fs14" style="margin-left: 17px">
+        <table cellspacing="0" cellpadding="1" border="0" width="98%">
+          <tbody></tbody>
+        </table>
+      </div>
+      <!-- 当前版主要新闻详情 -->
+      <div id="right_news3" style="margin-left: 17px">
+        <table width="568" height="23" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td width="27%" height="23" align="right">
+                <div align="center" class="fs12">
+                  <table width="100%" border="0">
+                    <tbody>
+                      <tr>
+                        <td nowrap="" width="50%" class="px12">
+                          <a class="preart prevstart swiper-button-disabled">
+                            <font face="Webdings">3</font>上一篇
+                          </a>&nbsp;&nbsp;
+                        </td>
+                        <td nowrap="" width="50%" class="px12">
+                          <a class="preart nextstart swiper-button-disabled">下一篇<font face="Webdings">4</font>
+                          </a>&nbsp;&nbsp;
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+              <td width="73%" height="23" align="center">
+                <span class="fs12 lh28">字体： 放大<a class="zoomIn" href="javascript:"><img src="./img/zoomin.gif"
+                      width="16" height="16" border="0" align="middle" /></a>
+                  默认<a onclick="ozoom.style.zoom='100%';" href="javascript:"><img src="./img/zoomact.gif" width="16"
+                      height="16" border="0" align="middle" /></a>
+                  缩小<a class="zoomOut" href="javascript:"><img src="./img/zoomout.gif" width="16" height="16" border="0"
+                      align="middle" /></a></span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <span class="fs12">[<a id="nowNav2" href="">本版导航</a>]</span>
+                <span class="fs12"><a class="backHome" href="">[返回首页]</a></span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="share-wrap share-wrap2">
+          <div class="icon-s">
+            <span class="icon"><img class="normal" src="./img/icon.png" alt="" />
+            </span>
+            <p>分享</p>
+          </div>
+          <div class="more">
+            <a class="txt link">
+              <span><img src="./img/link.png" alt="" /></span>
+              <span>复制链接</span>
+            </a>
+            <a class="txt weibo social-share">
+              <span><img src="./img/wb.png" alt="" /></span>
+              <span>新浪微博</span>
+            </a>
+            <a class="txt weixin">
+              <span><img src="./img/wx.png" alt="" /></span>
+              <span>微信扫一扫</span>
+            </a>
+            <div class="qrcode"><canvas width="98" height="98"></canvas></div>
+          </div>
+        </div>
+        <!-- 正文内容 -->
+        <table width="568" border="0" align="center" cellpadding="0" cellspacing="0" id="desContent"
+          style="margin: 3px 0px"></table>
+        <div class="xmlCreateTime" style="color: #666;text-align: left;font-size: 14px;margin: 10px 0 10px 20px;">
+        </div>
+        <table width="568" height="23" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td width="27%" height="23" align="right">
+                <div align="center" class="fs12">
+                  <table width="100%" border="0">
+                    <tbody>
+                      <tr>
+                        <td nowrap="" width="50%" class="px12">
+                          <a class="preart prevstart swiper-button-disabled">
+                            <font face="Webdings">3</font>上一篇
+                          </a>&nbsp;&nbsp;
+                        </td>
+                        <td nowrap="" width="50%" class="px12">
+                          <a class="preart nextstart swiper-button-disabled">下一篇<font face="Webdings">4</font>
+                          </a>&nbsp;&nbsp;
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+              <td width="73%" height="23" align="center">
+                <span class="fs12 lh28">字体： 放大<a class="zoomIn" href="javascript:"><img src="./img/zoomin.gif"
+                      width="16" height="16" border="0" align="middle" /></a>
+                  默认<a onclick="ozoom.style.zoom='100%';" href="javascript:"><img src="./img/zoomact.gif" width="16"
+                      height="16" border="0" align="middle" /></a>
+                  缩小<a class="zoomOut" href="javascript:"><img src="./img/zoomout.gif" width="16" height="16" border="0"
+                      align="middle" /></a></span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="#top" id="toTop" class="fs12">[返回页顶]</a>
+                <a class="backHome" href="" class="fs12">[返回首页]</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 各版主要新闻 -->
+      <div class="newsMenu">
+        <table width="200" border="0" align="center" cellpadding="0" cellspacing="0">
+          <tbody>
+            <tr>
+              <td height="28" background="./img/index_r7_c15.jpg" class="white fs14">
+                <font style="padding-left: 50px">各版主要新闻</font>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="right_news2" style="margin-left: 17px">
+        <table cellspacing="0" cellpadding="2" width="98%" border="0">
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- 右侧内容 end -->
+    <div class="clear"></div>
+
+    <!-- 底部内容 start -->
+    <div id="footer1">
+      <table width="960" border="0" cellspacing="0" cellpadding="0">
+        <tbody>
+          <tr>
+            <td height="50" align="center" valign="top" background="./img/index_r24_c3.jpg" class="fs12 lh24 white">
+              <a href="http://news.gxnews.com.cn" target="_blank" class="white">新闻中心</a>
+              |
+              <a href="http://news.gxnews.com.cn/" target="_blank" class="white">广西</a>
+              |
+              <a href="http://asean.gxnews.com.cn/" target="_blank" class="white">东盟</a>
+              |
+              <a href="http://sub.gxnews.com.cn/subject/2012/faceb/index.html" target="_blank" class="white">脸谱</a>
+              |
+              <a href="http://sub.gxnews.com.cn" target="_blank" class="white">专题</a>
+              |
+              <a href="http://pic.gxnews.com.cn" target="_blank" class="white">图片</a>
+              |
+              <a href="http://hongdou.gxnews.com.cn/" target="_blank" class="white">红豆</a>
+              |
+              <a href="http://culture.gxnews.com.cn" target="_blank" class="white">文化</a>
+              |
+              <a href="http://sports.gxnews.com.cn/" target="_blank" class="white">体育</a>
+              |
+              <a href="http://tv.gxnews.com.cn/" target="_blank" class="white">视频</a>
+              |
+              <a href="http://txy.gxnews.com.cn/" target="_blank" class="white">通讯员</a>
+              |
+              <a href="http://edu.gxnews.com.cn/" target="_blank" class="white">教育</a>
+              |
+              <a href="http://travel.gxnews.com.cn/" target="_blank" class="white">旅游</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="footer2" class="fs12 lh20">
+      广西新闻网版权所有　<a href="http://www.gxnews.com.cn/staticpages/20240928/newgx66f75c25-21631434.shtml"
+        target="_blank">版权声明</a>　|　关于广西日报社　|　<a href="mailto:xgw@gxrb.com.cn" target="_blank">投稿信箱</a>　|　<a
+        href="http://www.gxnews.com.cn/include/copyright/contact.htm" target="_blank">联系方式</a>　|　<a
+        href="mailto:xgw@gxrb.com.cn" target="_blank">网管信箱</a>　|　<a
+        href="http://www.gxnews.com.cn/include/copyright/bzgg_bzad1.htm" target="_blank">广告服务</a>
+      <br /><a href="https://beian.miit.gov.cn" target="_blank">ICP证： 桂B2-20040022-15</a><br />
+    </div>
+    <!-- 底部内容 end -->
+  </div>
+
+  <script type="text/javascript" src="../js/jquery.min.js"></script>
+  <script language="Javascript" src="../js/swiper.min.js"></script>
+  <script language="Javascript" src="../js/prototype.js"></script>
+  <script language="javascript" src="../js/clossCalendar.js"></script>
+  <script language="javascript" src="../js/common.js?f=17"></script>
+  <!-- 日历层开始 -->
+  <script language="javascript" src="../js/gxCalendar.js"></script>
+  <div id="schedule" onmouseover="getElementById('schedule').style.display='block';">
+    <script type="text/javascript">
+      window.Today = new Date()
+      window.tY = Today.getFullYear()
+      window.tM = Today.getMonth()
+      window.tD = Today.getDate()
+      window.pathname = window.location.pathname
+
+      function getDateFromUrl() {
+        var sUrl = window.location.href
+        var tmpDay, tmpMonth, tmpYear
+        var index = sUrl.lastIndexOf('/')
+        if (index > 0) {
+          sUrl = sUrl.substring(0, index)
+          var index2 = sUrl.lastIndexOf('/')
+          if (index2 > 0) {
+            tmpDay = sUrl.substring(index2 + 1)
+            sUrl = sUrl.substring(0, index2)
+            var index3 = sUrl.lastIndexOf('/')
+            if (index3 > 0) {
+              sUrl = sUrl.substring(index3 + 1)
+              if (sUrl.length != 7) return
+
+              var index4 = sUrl.lastIndexOf('-')
+              if (index4 > 0) {
+                tmpYear = sUrl.substring(0, index4)
+                tmpMonth = sUrl.substring(index4 + 1)
+              } else return
+            } else return
+          } else return
+        } else {
+          return
+        }
+        tY = tmpYear
+        tM = tmpMonth - 1
+        tD = tmpDay
+      }
+
+      function drawCalendar(y, m, selectedDate) {
+        var cal = new dyCalendar(y, m)
+        if (selectedDate != null) {
+          cal.setSelectedDate(selectedDate)
+        }
+        var calendarHtml =
+          '<table><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>'
+        while (1) {
+          if (cal.isStartOfMonth()) {
+            calendarHtml += '<tr>'
+            for (var w = 0; w < cal.getWeekDay(); w++) {
+              calendarHtml += '<td></td>'
+            }
+          } else if (cal.isStartOfWeek()) {
+            calendarHtml += '<tr>'
+          }
+          //取得年月日
+          var t_year = cal.getFullYear()
+          var t_month = cal.getMonth() + 1
+          var t_day = cal.getDate()
+          var t_date = t_year + '/' + t_month + '/' + t_day
+          var d_date = new Date(t_date)
+          //当日期小于2009-01-01时用旧地址
+          var slideData = dateData[0].replace(/-/g, '/')
+          var slideDataEnd = dateData[dateData.length - 1].replace(/-/g, '/')
+          var new_date = new Date(slideData)
+          var end_date = new Date(slideDataEnd)
+          var url = ''
+          if (d_date < new_date) {
+            url =
+              'http://epaper.gxrb.com.cn/gxrb/html/' +
+              cal.getFullYear() +
+              '-' +
+              (cal.getMonth() + 1 < 10 ? '0' : '') +
+              (cal.getMonth() + 1) +
+              '/' +
+              (cal.getDate() < 10 ? '0' : '') +
+              cal.getDate() +
+              '/node_4121.htm'
+          } else if (d_date > end_date) {
+            url =
+              'http://epaper.gxrb.com.cn/gxrb/html/' +
+              cal.getFullYear() +
+              '-' +
+              (cal.getMonth() + 1 < 10 ? '0' : '') +
+              (cal.getMonth() + 1) +
+              '/' +
+              (cal.getDate() < 10 ? '0' : '') +
+              cal.getDate() +
+              '/node_4121.htm'
+          } else {
+            url =
+              pathname +
+              '?date=' +
+              (cal.getFullYear() +
+                '-' +
+                ((cal.getMonth() + 1 < 10 ? '0' : '') +
+                  (cal.getMonth() + 1)) +
+                '-' +
+                ((cal.getDate() < 10 ? '0' : '') + cal.getDate())) +
+              '&cuName=' +
+              cuName +
+              '&code=001'
+          }
+          if (cal.isSelectedDate()) {
+            calendarHtml +=
+              '<td id="active"><a href="' +
+              url +
+              '">' +
+              cal.getDate() +
+              '</a></td>'
+          } else {
+            calendarHtml +=
+              '<td><a href="' + url + '">' + cal.getDate() + '</a></td>'
+          }
+          if (cal.isEndOfMonth()) {
+            for (var ew = cal.getWeekDay(); ew < 6; ew++) {
+              calendarHtml += '<td></td>'
+            }
+            calendarHtml += '</tr>'
+            break
+          } else if (cal.isEndOfWeek()) {
+            calendarHtml += '</tr>'
+          }
+          cal.next()
+        }
+        return calendarHtml + '</table>'
+      }
+    </script>
+    <select id="sYear" onmouseover="getElementById('schedule').style.display='block';"
+      onFocus="getElementById('schedule').style.display='block';"
+      onBlur="getElementById('schedule').style.display='block';"
+      onchange="document.getElementById('calendar').innerHTML = drawCalendar(document.getElementById('sYear').options[document.getElementById('sYear').selectedIndex].value, document.getElementById('sMonth').options[document.getElementById('sMonth').selectedIndex].value);">
+      <!-- <script type="text/javascript">
+          for (var i = 1999; i <= new Date().getFullYear(); i++) {
+            var str =
+              '<option value="' +
+              i +
+              '" ' +
+              (tY == i ? 'selected' : '') +
+              '>' +
+              i +
+              '</option>'
+            document.write(str)
+          }
+        </script> -->
+    </select>
+    <font size="2">
+      <b>年</b>
+    </font>
+    <select id="sMonth" onmouseover="getElementById('schedule').style.display='block';"
+      onFocus="getElementById('schedule').style.display='block';"
+      onBlur="getElementById('schedule').style.display='block';"
+      onchange="document.getElementById('calendar').innerHTML = drawCalendar(document.getElementById('sYear').options[document.getElementById('sYear').selectedIndex].value, document.getElementById('sMonth').options[document.getElementById('sMonth').selectedIndex].value);">
+      <!-- <script type="text/javascript">
+          for (var i = 1; i < 13; i++) {
+            var str =
+              '<option value="' +
+              (i - 1) +
+              '" ' +
+              (tM == i - 1 ? 'selected' : '') +
+              '>' +
+              i +
+              '</option>'
+            document.write(str)
+          }
+        </script> -->
+    </select>
+    <font size="2">
+      <b>月</b>
+    </font>
+    <div id="calendar" onMouseOut="getElementById('schedule').style.display='none';"></div>
+  </div>
+  <!-- 日历层结束 -->
+  <!-- <script src="https://gxcloud.gxrb.com.cn/preview/app_info.js"></script> -->
+  <script src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+  <script src="../js/clipboard.min.js"></script>
+  <script src="../js/jquery.qrcode.js"></script>
+  <script src="../js/qrcode.js"></script>
+  <script language="javascript" src="../js/index.js?f=20"></script>
+</body>
+
+</html>

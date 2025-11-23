@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=7,IE=10">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <title>福建日报数字报-要闻 </title>
+	<link type="text/css" rel="stylesheet" href="../../../css/style.css?v=20210810">
+  <script>
+		var paperID = 1
+	 </script>
+	<script language="Javascript" src="../../../js/jquery-3.7.0.min.js"></script>
+  <script language="Javascript" src="../../../js/config.js"></script>
+	<script language="Javascript" src="../../../js/calendar.js?v=20220217"></script>
+    <style type="text/css">
+	<!--
+	img{border-width:0px;}
+	.STYLE30 {color: #333; font-weight: bold; }
+	.commonlight2{background-color:#a2dbff;}
+	.commoncolor3{background-color:#FFFFFF;}
+	.top{float:left; height:116px;padding:0 24px; width:996px;}
+	.top_left{ margin-top:17px;width:308px; height:63px;}
+	.top_right{ margin-top:17px;width:535px; float:right;}
+	.top_right li{display:inline; float:right;}
+	-->
+	</style>
+</head>
+
+<body text="#000000" vlink="#000000" alink="#ff0000" link="#000000" leftmargin="0" topmargin="0" marginheight="0" marginwidth="0">
+<table border="0" cellspacing="0" cellpadding="0" align="center">
+  <tbody><tr>
+    <td>
+  <tbody><tr>
+    <td>
+    <table border="0" cellspacing="0" cellpadding="0" align="center">
+    <tbody><tr>
+        <td>
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" height="116">
+        <tbody><tr>
+        <td width="350" style="padding-left:42px;"><img src="../../../img/logo.gif" style="height:80px"></td>
+        <td width="10"></td>
+        <td width="102" id="searchForm">
+			<input   name="q"  id="search-input" type="text" autocomplete="off" size="20" style="width:280px; height:32px;padding-left:10px;">
+			<input type="submit" value="搜 索" class="searchBtn">
+         	<input type="hidden" name="op" value="single">
+			<input type="hidden" name="siteID" value="1">
+            <input type="hidden" name="paperID" value="1">
+			<input type="hidden" name="sort" value="date">
+		</td>
+		<td width="1"></td>
+        </tr>
+          </tbody></table>
+          </td>
+        </tr>
+      <tr>
+        <td height="46" valign="top">
+        <div style=" position:relative;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" id="head_bg">
+          <tbody><tr>
+
+            <td width="579" align="left">
+			
+            <div class="menu">
+                <ul class="menu">
+                    <li><span><a href="/">首页</a></span></li>
+                    <li><span id="bmgl"><a href="javascript:;" >版面概览</a></span></li>
+					<li><a id="nva_xlbk" href="javascript:void(0);" class="arrow" align="center" style="width: 102px;">系列报刊</a>
+                        <ul id="nva_xlbk_list" style="width: 120px;">
+                            <li><a href="//fjrb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 福建日报</a></li>
+                               <li><a href="//hxdsb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 海峡都市报</a></li>
+		<li><a href="//fjwsb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 福建卫生报</a></li>
+		<li><a href="//jjjjb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 晋江经济报</a></li>
+		<li><a href="//ssrb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 石狮日报</a></li>
+                            <li><a href="//hssb.fjdaily.com" target="_blank" class="stumbleupon" align="center"> 海丝商报</a></li>
+                        </ul>
+                    </li>
+					<li><a href="http://www.fjsen.com/" target="_blank">东南网</a></li>
+                </ul>
+            </div>
+                        
+            </td>
+            
+	 <td width="60" height="46" align="center" valign="middle" style="background:url(../../../img/pic18.png) no-repeat 0 10px; font-size:13px;color:#F00; font-family:&#39;Times New Roman&#39;, Times, serif; cursor:pointer;" id="calendershow" onclick='javascript:$(".time-control").toggle()'; title="点击查看日历"></td>
+            
+            <td width="200" align="right" id="banner_top_date"><span class="default_rq" id="paperdate">2025年11月19日 星期三</span></td>
+           
+            
+            </tr>
+        </tbody></table>
+						<!--日历 begin-->
+						<div class="time-control" style="position:absolute; left:570px;">
+							<div class="data_box" id="data_box">
+								<table cellspacing="0" cellpadding="0" style="background-color:#fff;width:213px;">
+									<tbody>
+										<tr>
+											<td style="background: #f6f6f6; text-align: center;border: 1px solid #ddd;padding: 0 2px;">
+												<span style="margin-left: -3px;margin-right: 5px;" class="ft18 pointer ft18 arrow-left" onclick="changeY(-1);"></span>
+											</td>
+											<td>
+												<table cellspacing="0" cellpadding="0">
+													<tbody>
+														<tr>
+															<td>
+																<select style="width: 64px; height: 24px; border: 1px solid #ddd;" id="year_box" onchange="changeDate();">
+																	<script type="text/javascript">
+																		yearList();
+																	</script>
+															</td>
+															<td align="center" style="background: #f6f6f6; text-align: center;border: 1px solid #ddd;padding: 0 2px;display: block;height: 22px;margin-right: 8px;">
+																<span style="margin-left: 5px; margin-top: 6px;" class="ft18 pointer arrow-right" onclick="changeY(1);"></span>
+															</td>
+															<td style="background: #f6f6f6; text-align: center;border: 1px solid #ddd;padding: 0 2px;" align="center">
+																<span style="margin-right: 6px;" class="ft18 pointer arrow-left" onclick="changeMn(-1);"></span>
+															</td>
+														</tr>
+													</tbody>
+												</table>
+											</td>
+											<td>
+												<table cellspacing="0" cellpadding="0">
+													<tbody>
+														<tr>
+															<td>
+																<select style="width: 59px; height: 24px; border: 1px solid #ddd;" id="month_box" onchange="changeDate();">
+																	<script type="text/javascript">
+																		monthList();
+																	</script>
+															</td>
+														</tr>
+													</tbody>
+												</table>
+											</td>
+											<td style="background: #f6f6f6; text-align: center;border: 1px solid #ddd;padding: 0 2px;">
+												<span style="margin-left: 5px;" class="ft18 pointer arrow-right" onclick="changeMn(1);"></span>
+
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								<table cellspacing="0" cellpadding="0" class="data_table" id="data_table">
+									<thead>
+										<tr>
+											<th>日</th>
+											<th>一</th>
+											<th>二</th>
+											<th>三</th>
+											<th>四</th>
+											<th>五</th>
+											<th>六</th>
+										</tr>
+									</thead>
+									<tbody>
+										<script type="text/javascript">
+											tdlist();
+											loadCalendar();
+										</script>
+									</tbody>
+								</table>
+							</div>
+						</div>
+						<!--日历 end-->
+        </div>
+        
+        </td>
+      </tr>
+    </tbody></table>
+    </td>
+    </tr>
+  <tr>
+    <td><table width="929" border="0" cellspacing="0" cellpadding="0" id="mainBox">
+          <tbody><tr>
+            <td width="407" valign="top"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tbody><tr>
+              <td><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                  <tbody><tr>
+                    <td height="34" colspan="2" style="background-color:#f4f4f4;"><img src="../../../img/x1.gif" width="448" height="34"></td>
+                    </tr>
+                  <tr>
+                    <td style=" background-color:#FFF;padding:10px;width:407px; border:#000 1px solid; height:auto;" align="center" valign="top">
+                    
+					<div id="main-ed-map" class="newspaper-pic" style="position: relative;">
+                       <img class="preview" src="../../../pic/202511/19/614de68c-b510-43e8-b7ad-6e147f6b541b.jpg.1" usemap="#PagePicMap" id="bd" style="width:411px;height:593px;" />
+						<MAP NAME="PagePicMap"><Area coords="407.58969462,31.64887847,407.58969462,3.3314621399999997,200.08948503,3.3314621399999997,200.08948503,31.64887847,200.08948503,94.11376691,407.58969462,94.11376691" shape="polygon" href="../../../con/202511/19/content_491824.html"><Area coords="269.25622293,165.74016734,269.25622293,99.11095418999999,3.29365536,99.11095418999999,3.29365536,165.74016734,3.29365536,218.21067529,269.25622293,218.21067529" shape="polygon" href="../../../con/202511/19/content_491825.html"><Area coords="279.96059873999997,103.27527889999999,407.58969462,103.27527889999999,407.58969462,299.83146214,279.96059873999997,299.83146214" shape="polygon" href="../../../con/202511/19/content_491826.html"><Area coords="68.34332406,237.3665737,265.13915373000003,237.3665737,265.13915373000003,438.08707572,68.34332406,438.08707572" shape="polygon" href="../../../con/202511/19/content_491827.html"><Area coords="61.75601334,256.52247210999997,7.41072045,256.52247210999997,7.41072045,389.78089841,7.41072045,438.08707572,61.75601334,438.08707572" shape="polygon" href="../../../con/202511/19/content_491828.html"><Area coords="407.58969462,328.14887847,407.58969462,303.99578685,279.96059873999997,303.99578685,279.96059873999997,328.14887847,279.96059873999997,408.93679682000004,407.58969462,408.93679682000004" shape="polygon" href="../../../con/202511/19/content_491829.html"><Area coords="403.47262952999995,438.08707572,403.47262952999995,413.93399002999996,284.07766794,413.93399002999996,284.07766794,438.08707572,284.07766794,476.39887847,403.47262952999995,476.39887847" shape="polygon" href="../../../con/202511/19/content_491830.html"><Area coords="269.25622293,471.40168526,231.37920273,461.40730477,231.37920273,448.08146214,41.9940894,448.08146214,41.9940894,461.40730477,91.39890336,466.40449205,91.39890336,467.23736055,95.51596845,467.23736055,134.2164066,471.40168526,134.2164066,505.54915737000005,3.29365536,505.54915737000005,3.29365536,581.33988844,269.25622293,581.33988844" shape="polygon" href="../../../con/202511/19/content_491831.html"><Area coords="282.43084026,494.72190837999995,405.11945310000004,494.72190837999995,405.11945310000004,578.8412948,282.43084026,578.8412948" shape="polygon" href="../../../con/202511/19/content_491832.html"></MAP>
+						<div id="popupbg" style="display:none; position:absolute; cursor:pointer" class="opacity2"></div>
+						<div id="popupid" style="position:absolute; top:5px; left:200px; display:none; cursor:pointer" class="popbox opacity9"></div>
+                  </div>
+
+                  </td>
+                   <td width="38" valign="top" height="622" style="background:url(../../../img/ybdh.jpg)no-repeat left top">
+                   <table border="0" cellspacing="0" cellpadding="0" width="38" height="106" style="background:url(../../../img/ybdh.jpg) no-repeat left top">
+                   <tbody><tr><td height="55"><a class="preart" href="#" id="goPrePeriod"><img src="../../../img/qyt.gif" width="41" height="55"></a></td></tr>
+                   <tr><td height="51"><a class="preart" href="#" id="goNextPeriod"><img src="../../../img/hyt.gif" width="41" height="51"></a></td></tr>
+                   </tbody></table>
+                   </td>
+                    </tr>
+                  <tr>
+                    <td height="9" colspan="2"><img src="../../../img/x2.gif" width="448" height="9"></td>
+                    </tr>
+                </tbody></table>
+                </td>
+                </tr>
+              <tr>
+                <td height="35">
+                <table width="434" border="0" cellspacing="0" cellpadding="0" style="background-color:#eee; padding:2px 0; font-size:12px;">
+                  <tbody><tr>
+                  
+                    <td height="25" width="300" align="left" style="padding-left:15px;" >
+                    第01版：要闻 </td>
+                    <td align="right">  <a href="node_02.html">下一版</a>&nbsp;&nbsp;</td>
+
+                  </tr>
+                </tbody></table>
+                </td>
+              </tr>
+            </tbody></table></td>
+             <td width="19"></td>   
+        <td valign="top">
+        <div style="width:563px;height:40px;background-color:#f4f4f4;"></div>
+        <table border="0" cellspacing="0" cellpadding="0" style="margin:10px 0 0 20px;">
+        <tbody><tr><td width="343" valign="top" style="border:1px solid #e1e1e1;">
+        <table width="343" border="0" cellspacing="0" cellpadding="0" align="center">
+        <tbody><tr><td><img src="../../../img/bbxw.png" width="333" height="35"></td></tr>
+        <tr><td height="10"></td></tr>
+              <tr>
+                <td>
+                <table width="343" border="0" cellspacing="0" cellpadding="0">
+                                            <tbody><tr>
+                                                <td>
+                                       <div id="main-ed-articlenav-list" style="width:323px;padding-left:10px;padding-bottom:8px;" class="scrollbar">
+                                                        <table cellspacing="0" cellpadding="1" border="0" width="323">
+                                                            <tbody>
+                        
+						                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491824.html">《习近平法治思想学习纲要（2025年版）》出版发行</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491825.html">坚持党的领导人民当家作主依法治国有机统一<br>合力开创法治中国建设新局面</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491826.html">践行大农业观大食物观 扎实推进乡村全面振兴<br>为在中国式现代化建设中奋勇争先作出更大贡献</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491827.html">安踏：创新“长跑”永不止步</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491828.html">坚定信心，续写更多发展奇迹</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491829.html">中国—东盟经贸合作新机遇对接会举行</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491830.html">贺  电</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491831.html">“蕉”链崛起：山海交融的产业新范</a></div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="wzlb_tr">
+                                                                    <td class="default" valign="top" style="border-bottom:1px dashed #9d9c77; font-family:verdana;">
+                                                                        <div style="display: inline">➤ <a href="../../../con/202511/19/content_491832.html">寿宁古祠传新韵</a></div>
+                                                                    </td>
+                                                                </tr>
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            </tbody></table></td>
+                </tr>
+            </tbody></table></td>
+            
+ <td width="9"></td>
+            <td width="190" valign="top" style="border:1px solid #e1e1e1;">
+            <table width="190" border="0" cellspacing="0" cellpadding="0" align="center">
+              <tbody><tr>
+                <td>
+                <table width="190" border="0" cellspacing="0" cellpadding="0" style="background:url(../../../image/images01.gif) repeat-x bottom bottom" height="35">
+                <tbody><tr><td><img src="../../../img/bmml.png" height="35"></td></tr>
+               <tr><td height="10"></td></tr>
+                </tbody></table></td>
+              </tr>
+              <tr>
+                <td>
+                <div style="width:190px;padding-bottom:8px;" align="center" class="scrollbar" id="bmlistbar">
+                                                        <table cellspacing="0" cellpadding="0" border="0" id="bmdhTable">
+                                                            <tbody>
+                    
+                                                                                    <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(255, 255, 255);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_01.html"  id="layout89580">01 要闻</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(232, 232, 232);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_02.html"  id="layout89568">02 要闻</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(255, 255, 255);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_03.html"  id="layout89581">03 要闻</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(232, 232, 232);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_04.html"  id="layout89575">04 专题</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(255, 255, 255);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_05.html"  id="layout89582">05 弄潮大湾区 第十五届全国运动会特刊</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(232, 232, 232);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_06.html"  id="layout89584">06 时事</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(255, 255, 255);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_07.html"  id="layout89536">07 观点</a></td>
+                                                                </tr>
+                                                                <tr class="bmdh_tr pile2" style="display: table-row; background-color: rgb(232, 232, 232);">
+                                                                    <td class="default" align="left" width="170" style="border-bottom:1px dashed #9d9c77;color:#414141;font-family:verdana;">  
+                                                                    	&nbsp;<a class="rigth_bmdh_href" href="node_08.html"  id="layout89535">08 深读</a></td>
+                                                                </tr>
+ 
+                                                            </tbody>
+                                                        </table>
+                                                      
+                                                  </div>
+                                                  </td> </tr>
+                                                   </tbody></table></td></tr>
+                                                    <tr><td height="16" colspan="4"></td></tr>
+                                                     <tr><td width="448" colspan="4" align="right">
+                                                   </tbody></table></td>
+          </tr>
+          </tbody></table></td>
+          
+  </tr>
+          
+          
+   <tr>
+    <td height="20"></td>
+  </tr>
+   </tbody></table> 
+    </td>
+  </tr>
+</tbody></table>
+
+</div>
+</div>
+
+    <!---标题导航--->
+    <div id="btdh">
+                    <ul>
+						
+						                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491824.html">
+                                            <h4>《习近平法治思想学习纲要（2025年版）》出版发行</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491825.html">
+                                            <h4>坚持党的领导人民当家作主依法治国有机统一<br>合力开创法治中国建设新局面</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491826.html">
+                                            <h4>践行大农业观大食物观 扎实推进乡村全面振兴<br>为在中国式现代化建设中奋勇争先作出更大贡献</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491827.html">
+                                            <h4>安踏：创新“长跑”永不止步</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491828.html">
+                                            <h4>坚定信心，续写更多发展奇迹</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491829.html">
+                                            <h4>中国—东盟经贸合作新机遇对接会举行</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491830.html">
+                                            <h4>贺  电</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491831.html">
+                                            <h4>“蕉”链崛起：山海交融的产业新范</h4>
+                                        </a>
+                                    </li>
+                                    <li class="resultList">
+                                        <a href="../../../con/202511/19/content_491832.html">
+                                            <h4>寿宁古祠传新韵</h4>
+                                        </a>
+                                    </li>
+
+					</ul>
+    </div>
+    <!---标题导航END--->
+	
+	<div class="foot">
+		  <div><span class="J-company-name">版权所有 &copy;2023 福建日报 fjdaily.com <a href="https://beian.miit.gov.cn/" target="_blank" ga_event="click_about">闽ICP备15008128号</a></span></div>
+		  <div><a href="http://www.12377.cn/" target="_blank" ga_event="click_about">中国互联网举报中心</a> </div>
+	</div>
+	<script>$("#layout89580").css("color","blue")</script>
+	
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Aggregator</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <header class="app-header">
+            <div class="date-bar">
+                <div class="date-nav">
+                    <button id="prev-day" class="nav-arrow" title="前一天">&larr;</button>
+                    <div class="date-display-container">
+                        <label for="date-picker" class="calendar-icon">
+                            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </label>
+                        <input type="date" id="date-picker" class="date-input">
+                        <span id="current-date-display">Loading...</span>
+                    </div>
+                    <button id="next-day" class="nav-arrow disabled" title="后一天">&rarr;</button>
+                </div>
+            </div>
+            <div class="header-content">
+                <nav class="source-nav">
+                    <button class="nav-btn active" data-source="all">全部</button>
+                    <button class="nav-btn" data-source="fujian">福建日报</button>
+                    <button class="nav-btn" data-source="hainan">海南日报</button>
+                    <button class="nav-btn" data-source="guangxi">广西日报</button>
+                    <button class="nav-btn" data-source="nanfang">南方日报</button>
+                    <button class="nav-btn" data-source="guangzhou">广州日报</button>
+
+                </nav>
+                <a href="/selection" class="nav-icon-btn" title="筛选筐">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <main class="container">
+            <div id="news-grid" class="news-grid">
+                <!-- News cards will be injected here -->
+                <div class="loading">加载中...</div>
+            </div>
+
+
+        </main>
+    </div>
+
+    <!-- Article Detail Modal -->
+    <div id="article-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="split-view">
+                <div class="view-pane cn-pane">
+                    <h3>原文 (Original)</h3>
+                    <div id="article-cn" class="article-body"></div>
+                </div>
+                <div class="view-pane ko-pane">
+                    <h3>译文 (Korean)</h3>
+                    <div id="article-ko" class="article-body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+
+</html>
