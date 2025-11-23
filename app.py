@@ -200,18 +200,9 @@ def fetch_and_translate_article_logic(url):
                 content_html += f"<p>{para}</p>"
             
             # Translate content paragraphs
-            translated_paragraphs = []
+            # Translation disabled - return original paragraphs
             content_paragraphs = article_data.get('content', [])
-            
-            if content_paragraphs:
-                with ThreadPoolExecutor(max_workers=5) as executor:
-                    futures = [executor.submit(GoogleTranslator(source='zh-CN', target='ko').translate, p) for p in content_paragraphs]
-                    for f in futures:
-                        try:
-                            translated_paragraphs.append(f.result())
-                        except Exception as e:
-                            print(f"Translation error: {e}")
-                            translated_paragraphs.append("[Translation Failed]")
+            translated_paragraphs = content_paragraphs  # No translation
             
             result = {
                 'status': 'success',
@@ -267,15 +258,8 @@ def fetch_and_translate_article_logic(url):
                 if not paragraphs:
                     paragraphs = [line.strip() for line in content_div.get_text().split('\n') if line.strip()]
 
-                translated_paragraphs = []
-                with ThreadPoolExecutor(max_workers=5) as executor:
-                    futures = [executor.submit(GoogleTranslator(source='zh-CN', target='ko').translate, p) for p in paragraphs]
-                    for f in futures:
-                        try:
-                            translated_paragraphs.append(f.result())
-                        except Exception as e:
-                            print(f"Translation error: {e}")
-                            translated_paragraphs.append("[Translation Failed]")
+                # Translation disabled - return original paragraphs
+                translated_paragraphs = paragraphs  # No translation
                 
                 result = {
                     'status': 'success',
@@ -314,15 +298,8 @@ def fetch_and_translate_article_logic(url):
             paragraphs = [p.get_text(strip=True) for p in content_div.find_all('p') if p.get_text(strip=True)]
             
             # Translate paragraphs concurrently
-            translated_paragraphs = []
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = [executor.submit(GoogleTranslator(source='zh-CN', target='ko').translate, p) for p in paragraphs]
-                for f in futures:
-                    try:
-                        translated_paragraphs.append(f.result())
-                    except Exception as e:
-                        print(f"Translation error: {e}")
-                        translated_paragraphs.append("[Translation Failed]")
+            # Translation disabled - return original paragraphs
+            translated_paragraphs = paragraphs  # No translation
             
             result = {
                 'status': 'success',
