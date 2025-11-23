@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  news-aggregator:
+    build: .
+    container_name: news_aggregator
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/app/data # Persist data directory
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
