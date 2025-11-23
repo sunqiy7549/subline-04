@@ -484,8 +484,9 @@ def get_news(source_key):
                 # Use the verified parser from nanfang_live module
                 logging.info(f"Fetching Nanfang Daily for date: {current_date}")
                 
-                # Try sections A01-A12 using the verified parser
-                for section_num in range(1, 13):
+                # Only fetch core sections A02-A08 (要闻/广东/时政等主版面)
+                # A09/A10 are mostly supplements/ads and can cause SSL timeout issues
+                for section_num in range(2, 9):  # A02 through A08
                     section_code = f"A{section_num:02d}"
                     
                     try:

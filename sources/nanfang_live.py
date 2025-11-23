@@ -26,10 +26,15 @@ def build_node_url(d: date, section: str = "A01") -> str:
 
 
 def fetch_html(url: str) -> str:
-    resp = requests.get(url, headers=HEADERS, timeout=15)
-    resp.raise_for_status()
-    resp.encoding = resp.apparent_encoding or "utf-8"
-    return resp.text
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp.raise_for_status()
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        return resp.text
+    except Exception as e:
+        logger.error(f"Error fetching {url}: {e}")
+        # Return empty string - parse_nanfang_node will return empty list
+        return ""
 
 
 def parse_nanfang_node(html: str, base_url: str, section: str = "A01"):
