@@ -11,9 +11,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (specifically chromium as used in the app)
-# The base image might have them, but this ensures they are installed for the python package
-RUN playwright install chromium
+# Install Playwright browsers with system dependencies
+# This ensures all required system libraries are installed
+RUN playwright install --with-deps chromium
 
 # Copy the rest of the application code
 COPY . .
