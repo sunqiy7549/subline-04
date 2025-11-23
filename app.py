@@ -39,6 +39,11 @@ from deep_translator import GoogleTranslator
 import threading
 from playwright.sync_api import sync_playwright
 
+# Import new fetcher and URL generators
+from utils.fetcher import fetch_html
+from sources.gzdaily import gzdaily_index_url, gzdaily_section_url
+from sources.nfdaily import nfdaily_section_url, nfdaily_article_url
+
 def translate_text(text, target='ko'):
     try:
         return GoogleTranslator(source='auto', target=target).translate(text)
@@ -472,138 +477,133 @@ def get_news(source_key):
 
         elif source_key == 'nanfang':
             source_name = "南方日报"
-            # Date format: YYYYMM/DD (e.g., 202511/21)
-            date_param = date_str.replace('-', '') if date_str else current_date.strftime('%Y%m/%d')
-            # Insert slash after YYYYMM
-            if len(date_param) == 8:  # YYYYMMDD
-                date_param = date_param[:6] + '/' + date_param[6:]
             
-            root_url = f"https://epaper.southcn.com/nfdaily/html/{date_param}/"
-            
-            # Try sections A01-A12
-            for section_num in range(1, 13):
-                section_code = f"A{section_num:02d}"
-                section_url = f"{root_url}node_{section_code}.html"
+            try:
+                # Use direct section URLs to avoid JS redirect issues
+                logging.info(f"Fetching Nanfang Daily for date: {current_date}")
                 
-                try:
-                    resp = session.get(section_url, timeout=10)
-                    if resp.status_code == 404:
-                        continue
+                # Try sections A01-A12
+                for section_num in range(1, 13):
+                    section_code = f"A{section_num:02d}"
                     
-                    resp.encoding = 'utf-8'
-                    soup = BeautifulSoup(resp.text, 'html.parser')
-                    
-                    # Find section name
-                    section_name = f"第{section_code}版"
-                    
-                    # Find article links with href containing 'content_'
-                    article_links = soup.select('a[href*="content_"]')
-                    
-                    for link in article_links:
-                        title = link.get_text(strip=True)
-                        href = link.get('href')
+                    try:
+                        # Use direct section URL generator
+                        section_url = nfdaily_section_url(current_date, section_code)
                         
-                        if href and title and len(title) > 3:
-                            # Article URLs use different domain
-                            if href.startswith('http'):
-                                abs_link = href
-                            else:
-                                abs_link = f"https://epaper.nfnews.com/nfdaily/html/{date_param}/{href}"
+                        html = fetch_html(section_url)
+                        soup = BeautifulSoup(html, 'html.parser')
+                        
+                        # Find section name
+                        section_name = f"第{section_code}版"
+                        
+                        # Find article links with href containing 'content_'
+                        article_links = soup.select('a[href*="content_"]')
+                        
+                        for link in article_links:
+                            title = link.get_text(strip=True)
+                            href = link.get('href')
                             
-                            # Translate title
-                            title_ko = translate_text(title)
-                            
-                            all_news_items.append({
-                                'title': title,
-                                'title_ko': title_ko,
-                                'link': abs_link,
-                                'section': section_name
-                            })
-                except Exception as e:
-                    logging.error(f"Error fetching Nanfang section {section_code}: {e}")
-                    continue
+                            if href and title and len(title) > 3:
+                                # Build absolute URL for article
+                                if href.startswith('http'):
+                                    abs_link = href
+                                else:
+                                    # Use the article URL generator
+                                    abs_link = nfdaily_article_url(current_date, href.replace('.html', ''))
+                                
+                                # Translate title
+                                title_ko = translate_text(title)
+                                
+                                all_news_items.append({
+                                    'title': title,
+                                    'title_ko': title_ko,
+                                    'link': abs_link,
+                                    'section': section_name
+                                })
+                    except Exception as e:
+                        # 404 is expected for non-existent sections
+                        if "404" not in str(e):
+                            logging.error(f"Error fetching Nanfang section {section_code}: {e}")
+                        continue
+                
+                logging.info(f"Nanfang Daily: found {len(all_news_items)} articles")
+                
+            except Exception as e:
+                logging.error(f"Error fetching Nanfang Daily: {e}")
 
         elif source_key == 'guangzhou':
             source_name = "广州日报"
-            # Date format: YYYY-MM/DD (e.g., 2025-11/21)
-            date_param = date_str if date_str else current_date.strftime('%Y-%m/%d')
-            # Ensure format is YYYY-MM/DD
-            if '-' in date_param and '/' not in date_param:
-                parts = date_param.split('-')
-                if len(parts) == 3:
-                    date_param = f"{parts[0]}-{parts[1]}/{parts[2]}"
-            
-            root_url = f"https://gzdaily.dayoo.com/pc/html/{date_param}/"
-            
-            # Use index page to get all articles (more reliable than checking individual sections)
-            # Format: index_YYYY-MM-DD.htm
-            index_date = date_param.replace('/', '-')  # Convert 2025-11/21 to 2025-11-21
-            index_url = f"{root_url}index_{index_date}.htm"
             
             try:
-                resp = session.get(index_url, timeout=10)
-                if resp.status_code == 404:
-                    logging.info(f"Guangzhou Daily index not found for {index_date}")
-                else:
-                    resp.encoding = 'utf-8'
-                    soup = BeautifulSoup(resp.text, 'html.parser')
-                    
-                    # Find all section divs with class 'bc'
-                    section_divs = soup.select('div.bc a[href*="node_"]')
-                    
-                    # Build a map of section URLs to section names
-                    section_map = {}
-                    for section_link in section_divs:
-                        section_href = section_link.get('href')
-                        section_text = section_link.get_text(strip=True)
-                        if section_href:
-                            section_map[section_href] = section_text
-                    
-                    logging.info(f"Found {len(section_map)} sections in Guangzhou Daily")
-                    
-                    # Now fetch each section page to get article titles
-                    for section_href, section_name in section_map.items():
-                        section_url = urllib.parse.urljoin(root_url, section_href)
+                # Use H5 version to avoid JS redirect issues
+                index_url = gzdaily_index_url(current_date)
+                logging.info(f"Fetching Guangzhou Daily H5 index: {index_url}")
+                
+                html = fetch_html(index_url)
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                # Find all section links in H5 layout
+                # H5 version uses different selectors
+                section_links = soup.select('a[href*="node_"]')
+                
+                # Build a map of section URLs to section names
+                section_map = {}
+                for section_link in section_links:
+                    section_href = section_link.get('href')
+                    section_text = section_link.get_text(strip=True)
+                    if section_href and 'node_' in section_href:
+                        # Build absolute URL
+                        if section_href.startswith('http'):
+                            abs_url = section_href
+                        else:
+                            # For H5 version, construct the full path
+                            date_path = current_date.strftime("%Y-%m/%d")
+                            abs_url = f"https://gzdaily.dayoo.com/h5/html5/{date_path}/{section_href}"
+                        section_map[abs_url] = section_text if section_text else "未知版面"
+                
+                logging.info(f"Found {len(section_map)} sections in Guangzhou Daily")
+                
+                # Now fetch each section page to get article titles
+                for section_url, section_name in section_map.items():
+                    try:
+                        section_html = fetch_html(section_url)
+                        section_soup = BeautifulSoup(section_html, 'html.parser')
                         
-                        try:
-                            section_resp = session.get(section_url, timeout=10)
-                            if section_resp.status_code != 200:
-                                continue
+                        # Find article links - H5 version may use different selectors
+                        # Try multiple selectors
+                        article_links = section_soup.select('a[data-title]') or \
+                                       section_soup.select('area[data-title]') or \
+                                       section_soup.select('a[href*="content"]')
+                        
+                        for link in article_links:
+                            title = link.get('data-title', '') or link.get_text(strip=True)
+                            href = link.get('href')
                             
-                            section_resp.encoding = 'utf-8'
-                            section_soup = BeautifulSoup(section_resp.text, 'html.parser')
-                            
-                            # Find article areas with data-title attribute
-                            article_areas = section_soup.select('area[data-title]')
-                            
-                            for area in article_areas:
-                                title = area.get('data-title', '').strip()
-                                href = area.get('href')
+                            if href and title and len(title) > 3:
+                                # Build absolute URL
+                                if href.startswith('http'):
+                                    abs_link = href
+                                else:
+                                    date_path = current_date.strftime("%Y-%m/%d")
+                                    abs_link = f"https://gzdaily.dayoo.com/h5/html5/{date_path}/{href}"
                                 
-                                if href and title and len(title) > 3:
-                                    # Build absolute URL
-                                    if href.startswith('http'):
-                                        abs_link = href
-                                    else:
-                                        abs_link = urllib.parse.urljoin(root_url, href)
-                                    
-                                    # Translate title
-                                    title_ko = translate_text(title)
-                                    
-                                    all_news_items.append({
-                                        'title': title,
-                                        'title_ko': title_ko,
-                                        'link': abs_link,
-                                        'section': section_name
-                                    })
-                        except Exception as e:
-                            logging.error(f"Error fetching Guangzhou section {section_href}: {e}")
-                            continue
-                    
-                    logging.info(f"Guangzhou Daily: found {len(all_news_items)} articles")
-                    
+                                # Translate title
+                                title_ko = translate_text(title)
+                                
+                                all_news_items.append({
+                                    'title': title,
+                                    'title_ko': title_ko,
+                                    'link': abs_link,
+                                    'section': section_name
+                                })
+                    except Exception as e:
+                        logging.error(f"Error fetching Guangzhou section {section_url}: {e}")
+                        continue
+                
+                logging.info(f"Guangzhou Daily: found {len(all_news_items)} articles")
+                
             except Exception as e:
-                logging.error(f"Error fetching Guangzhou Daily index: {e}")
+                logging.error(f"Error fetching Guangzhou Daily H5 index: {e}")
 
         elif source_key == 'guangxi':
             source_name = "广西日报"
@@ -709,5 +709,5 @@ def get_news(source_key):
 
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=5001)
+if __name__ == '__main__':
+    app.run(debug=True, port=5001)
