@@ -17,10 +17,10 @@ def nfdaily_section_url(d: date, section: str = "A01") -> str:
         
     Example:
         >>> from datetime import date
-        >>> nfdaily_section_url(date(2025, 11, 23))
-        'https://epaper.southcn.com/nfdaily/html/202511/23/node_A01.html'
+        >>> nfdaily_section_url(date(2025, 11, 22))
+        'https://epaper.southcn.com/nfdaily/html/202511/22/node_A01.html'
     """
-    return d.strftime(f"https://epaper.southcn.com/nfdaily/html/%Y%m/%d/node_{section}.html")
+    return f"https://epaper.southcn.com/nfdaily/html/{d:%Y%m}/{d:%d}/node_{section}.html"
 
 
 def nfdaily_article_url(d: date, article: str) -> str:
@@ -34,4 +34,4 @@ def nfdaily_article_url(d: date, article: str) -> str:
     Returns:
         URL string for the article page
     """
-    return d.strftime(f"https://epaper.nfnews.com/nfdaily/html/%Y%m/%d/{article}.html")
+    return f"https://epaper.nfnews.com/nfdaily/html/{d:%Y%m}/{d:%d}/{article}.html"

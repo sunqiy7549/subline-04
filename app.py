@@ -491,6 +491,10 @@ def get_news(source_key):
                         section_url = nfdaily_section_url(current_date, section_code)
                         
                         html = fetch_html(section_url)
+                        
+                        # DEBUG: Log first section's HTML to verify content (only for A01)
+                        if section_code == "A01":
+                            logging.info(f"Nanfang Daily A01 HTML first 300 chars: {html[:300]!r}")
                         soup = BeautifulSoup(html, 'html.parser')
                         
                         # Find section name
@@ -535,15 +539,19 @@ def get_news(source_key):
             source_name = "广州日报"
             
             try:
-                # Use H5 version to avoid JS redirect issues
+                # Use PC version index - this is the stable, pure HTML page
                 index_url = gzdaily_index_url(current_date)
-                logging.info(f"Fetching Guangzhou Daily H5 index: {index_url}")
+                logging.info(f"Fetching Guangzhou Daily PC index: {index_url}")
                 
                 html = fetch_html(index_url)
+                
+                # DEBUG: Log first part of HTML to verify we got content
+                logging.info(f"GZDaily HTML first 300 chars: {html[:300]!r}")
+                
                 soup = BeautifulSoup(html, 'html.parser')
                 
-                # Find all section links in H5 layout
-                # H5 version uses different selectors
+                # PC version structure: find section links
+                # Look for links to section pages (node_XXX.htm)
                 section_links = soup.select('a[href*="node_"]')
                 
                 # Build a map of section URLs to section names
@@ -556,9 +564,9 @@ def get_news(source_key):
                         if section_href.startswith('http'):
                             abs_url = section_href
                         else:
-                            # For H5 version, construct the full path
+                            # For PC version, construct the full path
                             date_path = current_date.strftime("%Y-%m/%d")
-                            abs_url = f"https://gzdaily.dayoo.com/h5/html5/{date_path}/{section_href}"
+                            abs_url = f"https://gzdaily.dayoo.com/pc/html/{date_path}/{section_href}"
                         section_map[abs_url] = section_text if section_text else "未知版面"
                 
                 logging.info(f"Found {len(section_map)} sections in Guangzhou Daily")
@@ -569,15 +577,12 @@ def get_news(source_key):
                         section_html = fetch_html(section_url)
                         section_soup = BeautifulSoup(section_html, 'html.parser')
                         
-                        # Find article links - H5 version may use different selectors
-                        # Try multiple selectors
-                        article_links = section_soup.select('a[data-title]') or \
-                                       section_soup.select('area[data-title]') or \
-                                       section_soup.select('a[href*="content"]')
+                        # Find article links - PC version uses area tags with data-title
+                        article_areas = section_soup.select('area[data-title]')
                         
-                        for link in article_links:
-                            title = link.get('data-title', '') or link.get_text(strip=True)
-                            href = link.get('href')
+                        for area in article_areas:
+                            title = area.get('data-title', '').strip()
+                            href = area.get('href')
                             
                             if href and title and len(title) > 3:
                                 # Build absolute URL
@@ -585,7 +590,7 @@ def get_news(source_key):
                                     abs_link = href
                                 else:
                                     date_path = current_date.strftime("%Y-%m/%d")
-                                    abs_link = f"https://gzdaily.dayoo.com/h5/html5/{date_path}/{href}"
+                                    abs_link = f"https://gzdaily.dayoo.com/pc/html/{date_path}/{href}"
                                 
                                 # Translate title
                                 title_ko = translate_text(title)
@@ -603,7 +608,7 @@ def get_news(source_key):
                 logging.info(f"Guangzhou Daily: found {len(all_news_items)} articles")
                 
             except Exception as e:
-                logging.error(f"Error fetching Guangzhou Daily H5 index: {e}")
+                logging.error(f"Error fetching Guangzhou Daily PC index: {e}")
 
         elif source_key == 'guangxi':
             source_name = "广西日报"
