@@ -2,6 +2,10 @@ flask
 requests
 beautifulsoup4
 lxml
+lxml_html_clean
 deep-translator
 playwright
 gunicorn
+APScheduler==3.10.4
+SQLAlchemy==2.0.23
+newspaper3k==0.2.8

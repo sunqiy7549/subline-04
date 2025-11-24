@@ -8,6 +8,7 @@ from datetime import datetime
 import urllib.parse
 import re
 
+# Initialize Flask app
 if getattr(sys, 'frozen', False):
     base_dir = sys._MEIPASS
     app = Flask(__name__, 
@@ -15,7 +16,28 @@ if getattr(sys, 'frozen', False):
                 static_folder=os.path.join(base_dir, 'static'))
 else:
     app = Flask(__name__)
+
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize database and scheduler
+from database import init_db, get_articles_by_date, get_stats
+from scheduler.scheduler import init_scheduler, shutdown_scheduler, get_next_run_times
+
+# Initialize database on startup
+logger.info("Initializing database...")
+init_db()
+logger.info("✓ Database ready")
+
+# Initialize scheduler on startup
+logger.info("Initializing background scheduler...")
+init_scheduler()
+logger.info("✓ Scheduler ready")
+
+# Register cleanup on shutdown
+import atexit
+atexit.register(shutdown_scheduler)
+
 
 def get_current_date_strs():
     now = datetime.now()
@@ -378,6 +400,10 @@ def toggle_star():
 
 @app.route('/api/news/<source_key>')
 def get_news(source_key):
+    """
+    Get news for a source. 
+    Priority: Database -> Real-time crawl
+    """
     date_str = request.args.get('date')
     if date_str:
         try:
@@ -386,7 +412,49 @@ def get_news(source_key):
             return jsonify({'error': 'Invalid date format'}), 400
     else:
         current_date = datetime.now()
+        date_str = current_date.strftime('%Y-%m-%d')
+    
+    # Try to get from database first
+    try:
+        articles = get_articles_by_date(source_key=source_key, date_str=date_str)
+        
+        if articles and len(articles) > 0:
+            # Found data in database
+            logger.info(f"[{source_key}] Serving {len(articles)} articles from database for {date_str}")
+            
+            # Convert to dict format
+            articles_data = [article.to_dict() for article in articles]
+            
+            # Mark starred items
+            for item in articles_data:
+                item['starred'] = item['link'] in STARRED_ITEMS
+            
+            source_names = {
+                'fujian': '福建日报',
+                'hainan': '海南日报',
+                'nanfang': '南方日报',
+                'guangzhou': '广州日报',
+                'guangxi': '广西日报'
+            }
+            
+            return jsonify({
+                'source': source_names.get(source_key, source_key),
+                'status': 'success',
+                'cached': True,
+                'data': articles_data
+            })
+        else:
+            # No data in database, fallback to real-time crawl
+            logger.info(f"[{source_key}] No cached data for {date_str}, falling back to real-time crawl")
+            return get_news_realtime(source_key, current_date, date_str)
+            
+    except Exception as e:
+        logger.error(f"[{source_key}] Database error: {e}, falling back to real-time crawl")
+        return get_news_realtime(source_key, current_date, date_str)
 
+
+def get_news_realtime(source_key, current_date, date_str):
+    """Original real-time crawling logic (fallback when DB is empty)."""
     dates = {
         'yyyymm': current_date.strftime('%Y%m'),
         'yyyy-mm': current_date.strftime('%Y-%m'),
@@ -671,11 +739,57 @@ def get_news(source_key):
         return jsonify({
             'source': source_name,
             'status': 'success',
+            'cached': False,
             'data': all_news_items
         })
 
     except Exception as e:
         logging.error(f"Error fetching {source_key}: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+# Admin API endpoints
+@app.route('/api/admin/scheduler/status')
+def scheduler_status():
+    """Get scheduler status and next run times."""
+    try:
+        next_runs = get_next_run_times()
+        stats = get_stats()
+        
+        return jsonify({
+            'status': 'success',
+            'scheduler': {
+                'active': True,
+                'next_runs': next_runs
+            },
+            'database': stats
+        })
+    except Exception as e:
+        logger.error(f"Error getting scheduler status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/trigger/<job_id>', methods=['POST'])
+def trigger_job(job_id):
+    """Manually trigger a scheduled job."""
+    from scheduler.scheduler import trigger_job_now
+    
+    try:
+        success = trigger_job_now(job_id)
+        
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': f'Job {job_id} triggered successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to trigger job {job_id}'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error triggering job {job_id}: {e}")
         return jsonify({'error': str(e)}), 500
 
 
