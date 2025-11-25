@@ -139,10 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         allNews = [];
 
         try {
-            // Fetch fast sources ONLY (Fujian, Hainan, Nanfang, Guangzhou)
-            // Guangxi is now handled separately
-            const fastSources = ['fujian', 'hainan', 'nanfang', 'guangzhou'];
-            const fastPromises = fastSources.map(source =>
+            // Fetch all sources including Guangxi (now from database)
+            const sources = ['fujian', 'hainan', 'nanfang', 'guangzhou', 'guangxi'];
+            const promises = sources.map(source =>
                 fetch(`/api/news/${source}?date=${dateStr}`)
                     .then(res => res.json())
                     .then(data => {
@@ -161,8 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
             );
 
-            const fastResults = await Promise.all(fastPromises);
-            allNews = fastResults.flat();
+            const results = await Promise.all(promises);
+            allNews = results.flat();
 
             sessionStorage.setItem(cacheKey, JSON.stringify(allNews));
             renderNews();
@@ -208,24 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderNews() {
         newsGrid.innerHTML = '';
-
-        // Special handling for Guangxi Daily view
-        if (currentSource === 'guangxi') {
-            const dateStr = datePicker ? datePicker.value : '';
-            const guangxiUrl = `/guangxi?date=${dateStr}`;
-
-            newsGrid.innerHTML = `
-                <div style="text-align: center; padding: 50px; width: 100%;">
-                    <div style="font-size: 60px; margin-bottom: 20px;">📰</div>
-                    <h2 style="margin-bottom: 15px; color: #333;">广西日报</h2>
-                    <p style="color: #666; margin-bottom: 30px;">广西日报内容较多，加载时间较长。请点击下方按钮在新标签页中打开。</p>
-                    <a href="${guangxiUrl}" target="_blank" class="nav-btn active" style="text-decoration: none; display: inline-block; padding: 12px 30px; font-size: 16px;">
-                        在新标签页中打开广西日报
-                    </a>
-                </div>
-            `;
-            return;
-        }
 
         let filteredNews = allNews;
 
