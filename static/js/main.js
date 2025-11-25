@@ -1,29 +1,37 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ============ UI 元素 ============
+    const newsLoadedState = document.getElementById('news-loaded-state');
+    const newsLoadingState = document.getElementById('news-loading-state');
+    const newsEmptyState = document.getElementById('news-empty-state');
+    
     const newsGrid = document.getElementById('news-grid');
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    const logStream = document.getElementById('log-stream');
+    const fetchButton = document.getElementById('fetch-button');
+    
     const navBtns = document.querySelectorAll('.nav-btn');
-
-    let allNews = [];
-    // Restore currentSource from sessionStorage or default to 'all'
-    let currentSource = sessionStorage.getItem('currentSource') || 'all';
-
-    // Restore date from sessionStorage or default to today
-    let currentDate = new Date();
-    const savedDate = sessionStorage.getItem('currentDate');
-    if (savedDate && !window.IS_SELECTION_PAGE) {
-        currentDate = new Date(savedDate);
-    }
-
-    // Date Elements
     const datePicker = document.getElementById('date-picker');
     const dateDisplay = document.getElementById('current-date-display');
     const prevDayBtn = document.getElementById('prev-day');
     const nextDayBtn = document.getElementById('next-day');
 
-    // Initialize
+    // ============ 状态变量 ============
+    let allNews = [];
+    let currentSource = sessionStorage.getItem('currentSource') || 'all';
+    let currentDate = new Date();
+    let crawlStatusPoller = null;  // 状态轮询定时器
+    
+    const savedDate = sessionStorage.getItem('currentDate');
+    if (savedDate && !window.IS_SELECTION_PAGE) {
+        currentDate = new Date(savedDate);
+    }
+
+    // ============ 初始化 ============
     if (window.IS_SELECTION_PAGE) {
         fetchSelectedNews();
     } else {
-        // Set active button based on restored source
+        // 设置活跃按钮
         navBtns.forEach(btn => {
             if (btn.dataset.source === currentSource) {
                 btn.classList.add('active');
@@ -33,25 +41,216 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         updateDateDisplay();
-        fetchAllNews();
+        loadPage();
     }
 
-    // Date Event Listeners
+    // ============ UI 状态管理 ============
+    function showLoadedState() {
+        newsLoadedState.style.display = 'block';
+        newsLoadingState.style.display = 'none';
+        newsEmptyState.style.display = 'none';
+    }
+
+    function showLoadingState() {
+        newsLoadedState.style.display = 'none';
+        newsLoadingState.style.display = 'block';
+        newsEmptyState.style.display = 'none';
+        logStream.innerHTML = '<div class="log-entry">准备中...</div>';
+        progressFill.style.width = '0%';
+        progressText.textContent = '准备中...';
+    }
+
+    function showEmptyState() {
+        newsLoadedState.style.display = 'none';
+        newsLoadingState.style.display = 'none';
+        newsEmptyState.style.display = 'block';
+        stopStatusPoller();
+    }
+
+    // ============ 日志管理 ============
+    function appendLog(message) {
+        const newEntry = document.createElement('div');
+        newEntry.className = 'log-entry';
+        newEntry.textContent = message;
+        logStream.appendChild(newEntry);
+        
+        // 自动滚动到底部
+        logStream.scrollTop = logStream.scrollHeight;
+        
+        // 只保留最后50条日志
+        const entries = logStream.querySelectorAll('.log-entry');
+        if (entries.length > 50) {
+            entries[0].remove();
+        }
+    }
+
+    // ============ 状态轮询 ============
+    function startStatusPoller(sourceKey) {
+        stopStatusPoller();
+        
+        crawlStatusPoller = setInterval(async () => {
+            try {
+                const response = await fetch(`/api/crawl/status/${sourceKey}`);
+                const status = await response.json();
+                
+                if (status.logs && status.logs.length > 0) {
+                    // 获取新日志
+                    const currentLogs = logStream.innerText.split('\n').filter(l => l.trim());
+                    const newLogs = status.logs.filter(l => !currentLogs.includes(l));
+                    
+                    newLogs.forEach(log => appendLog(log));
+                }
+                
+                // 更新进度条
+                progressFill.style.width = Math.min(status.progress, 100) + '%';
+                progressText.textContent = `进度: ${status.progress}% | 已发现 ${status.total_articles} 篇`;
+                
+                // 检查是否完成
+                if (status.state === 'completed') {
+                    appendLog('✓ 爬取完成！');
+                    stopStatusPoller();
+                    
+                    // 延迟1秒后重新加载页面
+                    setTimeout(() => {
+                        loadPage();
+                    }, 1000);
+                } else if (status.state === 'failed') {
+                    appendLog('✗ 爬取失败');
+                    stopStatusPoller();
+                }
+                
+            } catch (err) {
+                console.error('轮询状态失败:', err);
+            }
+        }, 1000);  // 每秒轮询一次
+    }
+
+    function stopStatusPoller() {
+        if (crawlStatusPoller) {
+            clearInterval(crawlStatusPoller);
+            crawlStatusPoller = null;
+        }
+    }
+
+    // ============ 页面加载逻辑 ============
+    async function loadPage() {
+        const dateStr = datePicker.value;
+        
+        if (currentSource === 'all') {
+            // 加载所有来源
+            await loadAllSources(dateStr);
+        } else {
+            // 加载单个来源
+            await loadSingleSource(currentSource, dateStr);
+        }
+    }
+
+    async function loadSingleSource(sourceKey, dateStr) {
+        try {
+            const response = await fetch(`/api/news/${sourceKey}?date=${dateStr}`);
+            const data = await response.json();
+            
+            // 根据响应状态选择显示
+            if (data.status === 'loaded') {
+                // 状态1: 已加载新闻
+                allNews = data.data.map(item => ({
+                    ...item,
+                    source: data.source,
+                    sourceKey: sourceKey
+                }));
+                renderNews();
+                showLoadedState();
+                stopStatusPoller();
+                
+            } else if (data.status === 'loading') {
+                // 状态2: 正在加载
+                showLoadingState();
+                startStatusPoller(sourceKey);
+                
+            } else if (data.status === 'empty') {
+                // 状态3: 无数据，显示重新抓取按钮
+                showEmptyState();
+            }
+            
+        } catch (error) {
+            console.error(`Failed to load ${sourceKey}:`, error);
+            showEmptyState();
+        }
+    }
+
+    async function loadAllSources(dateStr) {
+        try {
+            const sources = ['fujian', 'hainan', 'nanfang', 'guangzhou', 'guangxi'];
+            const results = [];
+            let anyLoading = false;
+            let anyEmpty = false;
+            let anyLoaded = false;
+            
+            const responses = await Promise.all(
+                sources.map(source =>
+                    fetch(`/api/news/${source}?date=${dateStr}`).then(r => r.json())
+                )
+            );
+            
+            // 分析响应状态
+            responses.forEach(data => {
+                if (data.status === 'loaded') {
+                    anyLoaded = true;
+                    results.push(...(data.data || []));
+                } else if (data.status === 'loading') {
+                    anyLoading = true;
+                } else if (data.status === 'empty') {
+                    anyEmpty = true;
+                }
+            });
+            
+            // 显示优先级: 已加载 > 正在加载 > 无数据
+            if (anyLoaded) {
+                allNews = results;
+                renderNews();
+                showLoadedState();
+                stopStatusPoller();
+                
+            } else if (anyLoading) {
+                // 至少有一个来源在加载，显示加载状态
+                showLoadingState();
+                appendLog('多个来源正在并行爬取...');
+                // 为第一个加载的来源启动轮询
+                const loadingSource = responses.find(r => r.status === 'loading');
+                if (loadingSource) {
+                    startStatusPoller(loadingSource.crawl_status.source_key);
+                }
+                
+            } else {
+                // 全部为空
+                showEmptyState();
+            }
+            
+        } catch (error) {
+            console.error('Failed to load all sources:', error);
+            showEmptyState();
+        }
+    }
+
+    // ============ 事件监听器 ============
+    
+    // 日期选择
     if (datePicker) {
         datePicker.addEventListener('change', (e) => {
             if (e.target.value) {
                 currentDate = new Date(e.target.value);
                 updateDateDisplay();
-                fetchAllNews();
+                loadPage();
             }
         });
     }
 
+    // 日期导航
     if (prevDayBtn) {
         prevDayBtn.addEventListener('click', () => {
             currentDate.setDate(currentDate.getDate() - 1);
             updateDateDisplay();
-            fetchAllNews();
+            loadPage();
         });
     }
 
@@ -60,9 +259,58 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isToday(currentDate)) return;
             currentDate.setDate(currentDate.getDate() + 1);
             updateDateDisplay();
-            fetchAllNews();
+            loadPage();
         });
     }
+
+    // 来源切换
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (window.IS_SELECTION_PAGE) return;
+
+            navBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            currentSource = btn.dataset.source;
+            sessionStorage.setItem('currentSource', currentSource);
+
+            loadPage();
+        });
+    });
+
+    // 手动抓取按钮
+    if (fetchButton) {
+        fetchButton.addEventListener('click', async () => {
+            const dateStr = datePicker.value;
+            const sourceKey = currentSource === 'all' ? 'fujian' : currentSource;  // 选择一个来源作为示例
+            
+            fetchButton.disabled = true;
+            showLoadingState();
+            appendLog(`开始手动抓取 ${sourceKey}...`);
+            
+            try {
+                const response = await fetch(`/api/crawl/start/${sourceKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: dateStr })
+                });
+                
+                if (response.ok) {
+                    startStatusPoller(sourceKey);
+                } else {
+                    appendLog('✗ 启动抓取失败');
+                    showEmptyState();
+                }
+            } catch (error) {
+                appendLog(`✗ 错误: ${error.message}`);
+                showEmptyState();
+            } finally {
+                fetchButton.disabled = false;
+            }
+        });
+    }
+
+    // ============ 辅助函数 ============
 
     function isToday(date) {
         const today = new Date();
@@ -89,88 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Event Listeners
-    navBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (window.IS_SELECTION_PAGE) return;
-
-            navBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            currentSource = btn.dataset.source;
-            sessionStorage.setItem('currentSource', currentSource);
-
-            renderNews();
-        });
-    });
-
-    async function fetchSelectedNews() {
-        newsGrid.innerHTML = '<div class="loading">正在获取筛选筐内容...</div>';
-        try {
-            const res = await fetch('/api/selection');
-            const data = await res.json();
-            if (data.status === 'success') {
-                allNews = data.data;
-                renderNews();
-            } else {
-                newsGrid.innerHTML = '<div class="loading">获取失败</div>';
-            }
-        } catch (err) {
-            console.error(err);
-            newsGrid.innerHTML = '<div class="loading">网络错误</div>';
-        }
-    }
-
-    async function fetchAllNews() {
-        if (window.IS_SELECTION_PAGE) return;
-
-        const dateStr = datePicker.value;
-        const cacheKey = `news_cache_${dateStr}`;
-
-        const cachedData = sessionStorage.getItem(cacheKey);
-        if (cachedData) {
-            console.log('Using cached news data');
-            allNews = JSON.parse(cachedData);
-            renderNews();
-            return;
-        }
-
-        newsGrid.innerHTML = '<div class="loading">正在获取报纸内容...</div>';
-        allNews = [];
-
-        try {
-            // Fetch all sources including Guangxi (now from database)
-            const sources = ['fujian', 'hainan', 'nanfang', 'guangzhou', 'guangxi'];
-            const promises = sources.map(source =>
-                fetch(`/api/news/${source}?date=${dateStr}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            return data.data.map(item => ({
-                                ...item,
-                                source: data.source,
-                                sourceKey: source
-                            }));
-                        }
-                        return [];
-                    })
-                    .catch(err => {
-                        console.error(`Failed to fetch ${source}:`, err);
-                        return [];
-                    })
-            );
-
-            const results = await Promise.all(promises);
-            allNews = results.flat();
-
-            sessionStorage.setItem(cacheKey, JSON.stringify(allNews));
-            renderNews();
-
-        } catch (error) {
-            console.error('Error fetching news:', error);
-            newsGrid.innerHTML = '<div class="loading">获取新闻失败，请稍后重试</div>';
-        }
-    }
+    // ============ 新闻渲染 ============
 
     // Modal Elements
     const modal = document.getElementById('article-modal');
@@ -263,28 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     item.starred = isStarred;
 
-                    // Update cache
-                    if (!window.IS_SELECTION_PAGE && datePicker) {
-                        const dateStr = datePicker.value;
-                        const cacheKey = `news_cache_${dateStr}`;
-                        sessionStorage.setItem(cacheKey, JSON.stringify(allNews));
-                    } else if (window.IS_SELECTION_PAGE) {
-                        for (let i = 0; i < sessionStorage.length; i++) {
-                            const key = sessionStorage.key(i);
-                            if (key && key.startsWith('news_cache_')) {
-                                try {
-                                    const cachedNews = JSON.parse(sessionStorage.getItem(key));
-                                    const itemIndex = cachedNews.findIndex(n => n.link === item.link);
-                                    if (itemIndex !== -1) {
-                                        cachedNews[itemIndex].starred = isStarred;
-                                        sessionStorage.setItem(key, JSON.stringify(cachedNews));
-                                    }
-                                } catch (e) {
-                                    console.error('Error updating cache:', e);
-                                }
-                            }
-                        }
-                    }
                 } catch (err) {
                     console.error('Star error:', err);
                     starBtn.classList.toggle('active');
@@ -298,5 +443,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    async function fetchSelectedNews() {
+        showLoadingState();
+        appendLog('正在获取筛选筐内容...');
+        
+        try {
+            const res = await fetch('/api/selection');
+            const data = await res.json();
+            if (data.status === 'success') {
+                allNews = data.data;
+                renderNews();
+                showLoadedState();
+            } else {
+                showEmptyState();
+            }
+        } catch (err) {
+            console.error(err);
+            showEmptyState();
+        }
+    }
 
 });

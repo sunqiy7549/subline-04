@@ -7,6 +7,9 @@ import logging
 from datetime import datetime
 import urllib.parse
 import re
+import threading
+from queue import Queue
+from enum import Enum
 
 # Initialize Flask app
 if getattr(sys, 'frozen', False):
@@ -38,6 +41,57 @@ logger.info("✓ Scheduler ready")
 import atexit
 atexit.register(shutdown_scheduler)
 
+# ============ 状态管理系统 ============
+class CrawlState(Enum):
+    """爬取任务状态"""
+    IDLE = "idle"              # 空闲
+    RUNNING = "running"        # 运行中
+    COMPLETED = "completed"    # 已完成
+    FAILED = "failed"          # 失败
+
+class SourceCrawlStatus:
+    """单个数据源的爬取状态"""
+    def __init__(self, source_key):
+        self.source_key = source_key
+        self.state = CrawlState.IDLE
+        self.progress = 0  # 0-100
+        self.logs = []  # 日志队列
+        self.total_articles = 0
+        self.start_time = None
+        self.end_time = None
+    
+    def add_log(self, message):
+        """添加日志"""
+        timestamp = datetime.now().strftime('%H:%M:%S')
+        log_entry = f"[{timestamp}] {message}"
+        self.logs.append(log_entry)
+        # 只保留最后100条日志
+        if len(self.logs) > 100:
+            self.logs.pop(0)
+    
+    def to_dict(self):
+        """转换为字典"""
+        return {
+            'source_key': self.source_key,
+            'state': self.state.value,
+            'progress': self.progress,
+            'logs': self.logs[-20:],  # 返回最后20条日志
+            'total_articles': self.total_articles,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None
+        }
+
+# 全局爬取状态管理
+CRAWL_STATUS = {
+    'fujian': SourceCrawlStatus('fujian'),
+    'hainan': SourceCrawlStatus('hainan'),
+    'nanfang': SourceCrawlStatus('nanfang'),
+    'guangzhou': SourceCrawlStatus('guangzhou'),
+    'guangxi': SourceCrawlStatus('guangxi')
+}
+
+CRAWL_LOCK = threading.Lock()  # 保证线程安全
+
 
 def get_current_date_strs():
     now = datetime.now()
@@ -52,9 +106,95 @@ def get_current_date_strs():
         'date_path': now.strftime('%Y%m/%d')
     }
 
+def get_current_date_strs():
+    now = datetime.now()
+    return {
+        'yyyymm': now.strftime('%Y%m'),
+        'yyyy-mm': now.strftime('%Y-%m'),
+        'dd': now.strftime('%d'),
+        'date_path': now.strftime('%Y%m/%d')
+    }
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
+# ============ 状态管理API ============
+
+@app.route('/api/crawl/status/<source_key>')
+def get_crawl_status(source_key):
+    """获取指定数据源的爬取状态"""
+    if source_key not in CRAWL_STATUS:
+        return jsonify({'error': 'Invalid source'}), 400
+    
+    status = CRAWL_STATUS[source_key]
+    return jsonify(status.to_dict())
+
+@app.route('/api/crawl/status/all')
+def get_all_crawl_status():
+    """获取所有数据源的爬取状态"""
+    return jsonify({
+        source_key: status.to_dict()
+        for source_key, status in CRAWL_STATUS.items()
+    })
+
+@app.route('/api/crawl/start/<source_key>', methods=['POST'])
+def start_crawl(source_key):
+    """手动启动某个数据源的爬取"""
+    if source_key not in CRAWL_STATUS:
+        return jsonify({'error': 'Invalid source'}), 400
+    
+    date_str = request.json.get('date') if request.json else None
+    if not date_str:
+        date_str = datetime.now().strftime('%Y-%m-%d')
+    
+    status = CRAWL_STATUS[source_key]
+    
+    # 如果已在运行，返回错误
+    if status.state == CrawlState.RUNNING:
+        return jsonify({'error': 'Crawl already running'}), 400
+    
+    # 在后台线程启动爬取
+    thread = threading.Thread(
+        target=_crawl_source_background,
+        args=(source_key, date_str),
+        daemon=True
+    )
+    thread.start()
+    
+    return jsonify({'status': 'success', 'message': f'Crawl started for {source_key}'})
+
+def _crawl_source_background(source_key, date_str):
+    """后台爬取任务"""
+    status = CRAWL_STATUS[source_key]
+    
+    with CRAWL_LOCK:
+        status.state = CrawlState.RUNNING
+        status.start_time = datetime.now()
+        status.logs.clear()
+        status.total_articles = 0
+        status.add_log(f"Starting crawl for {date_str}")
+    
+    # 在应用上下文中执行爬取
+    with app.app_context():
+        try:
+            # 调用爬取逻辑
+            current_date = datetime.strptime(date_str, '%Y-%m-%d')
+            result = _perform_crawl(source_key, current_date, date_str, status)
+            
+            with CRAWL_LOCK:
+                status.total_articles = result.get('count', 0)
+                status.state = CrawlState.COMPLETED
+                status.progress = 100
+                status.end_time = datetime.now()
+                status.add_log(f"✓ Crawl completed: {result.get('count', 0)} articles")
+        
+        except Exception as e:
+            with CRAWL_LOCK:
+                status.state = CrawlState.FAILED
+                status.end_time = datetime.now()
+                status.add_log(f"✗ Crawl failed: {str(e)}")
+                logger.error(f"Crawl error for {source_key}: {e}")
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from deep_translator import GoogleTranslator
@@ -339,6 +479,41 @@ def fetch_and_translate_article_logic(url):
         
     return None
 
+def _perform_crawl(source_key, current_date, date_str, status):
+    """
+    执行爬取任务，返回结果字典
+    """
+    try:
+        # 直接调用 get_news_realtime 处理爬取
+        response = get_news_realtime(source_key, current_date, date_str, status)
+        
+        # 如果返回的是 Response 对象，获取 JSON 数据
+        if hasattr(response, 'get_json'):
+            response_data = response.get_json()
+        else:
+            response_data = response
+        
+        if response_data.get('status') != 'success':
+            return {'count': 0, 'error': response_data.get('error', 'Unknown error')}
+        
+        articles = response_data.get('data', [])
+        
+        # 保存到数据库
+        if articles:
+            from database.db import save_articles
+            success_count, error_count = save_articles(articles, source_key, date_str)
+            status.add_log(f"Saved {success_count} articles to database")
+            return {'count': success_count}
+        
+        return {'count': 0}
+        
+    except Exception as e:
+        status.add_log(f"Error during crawl: {str(e)}")
+        logger.error(f"Crawl error: {e}")
+        return {'count': 0, 'error': str(e)}
+    
+    return {'count': 0}
+
 @app.route('/selection')
 def selection_page():
     return render_template('selection.html')
@@ -401,8 +576,12 @@ def toggle_star():
 @app.route('/api/news/<source_key>')
 def get_news(source_key):
     """
-    Get news for a source. 
-    Priority: Database -> Real-time crawl
+    Get news for a source with status tracking.
+    
+    Response states:
+    1. 'loaded' - News available from database/cache
+    2. 'loading' - Currently crawling, show progress
+    3. 'empty' - No news available and not crawling, show fetch button
     """
     date_str = request.args.get('date')
     if date_str:
@@ -414,12 +593,25 @@ def get_news(source_key):
         current_date = datetime.now()
         date_str = current_date.strftime('%Y-%m-%d')
     
+    if source_key not in CRAWL_STATUS:
+        return jsonify({'error': 'Invalid source'}), 400
+    
+    status = CRAWL_STATUS[source_key]
+    
+    source_names = {
+        'fujian': '福建日报',
+        'hainan': '海南日报',
+        'nanfang': '南方日报',
+        'guangzhou': '广州日报',
+        'guangxi': '广西日报'
+    }
+    
     # Try to get from database first
     try:
         articles = get_articles_by_date(source_key=source_key, date_str=date_str)
         
         if articles and len(articles) > 0:
-            # Found data in database
+            # Found data in database - return loaded state
             logger.info(f"[{source_key}] Serving {len(articles)} articles from database for {date_str}")
             
             # Convert to dict format
@@ -429,38 +621,66 @@ def get_news(source_key):
             for item in articles_data:
                 item['starred'] = item['link'] in STARRED_ITEMS
             
-            source_names = {
-                'fujian': '福建日报',
-                'hainan': '海南日报',
-                'nanfang': '南方日报',
-                'guangzhou': '广州日报',
-                'guangxi': '广西日报'
-            }
-            
             return jsonify({
                 'source': source_names.get(source_key, source_key),
-                'status': 'success',
-                'cached': True,
+                'status': 'loaded',
+                'crawl_status': status.to_dict(),
                 'data': articles_data
             })
         else:
-            # No data in database, fallback to real-time crawl
-            logger.info(f"[{source_key}] No cached data for {date_str}, falling back to real-time crawl")
-            return get_news_realtime(source_key, current_date, date_str)
+            # No data in database
+            if status.state == CrawlState.RUNNING:
+                # Currently crawling - return loading state with progress
+                logger.info(f"[{source_key}] Currently crawling...")
+                return jsonify({
+                    'source': source_names.get(source_key, source_key),
+                    'status': 'loading',
+                    'crawl_status': status.to_dict(),
+                    'data': []
+                })
+            else:
+                # Not crawling and no data - return empty state with fetch button
+                logger.info(f"[{source_key}] No cached data, allow manual fetch")
+                return jsonify({
+                    'source': source_names.get(source_key, source_key),
+                    'status': 'empty',
+                    'crawl_status': status.to_dict(),
+                    'data': []
+                })
             
     except Exception as e:
-        logger.error(f"[{source_key}] Database error: {e}, falling back to real-time crawl")
-        return get_news_realtime(source_key, current_date, date_str)
+        logger.error(f"[{source_key}] Database error: {e}")
+        # Return empty state if database error
+        return jsonify({
+            'source': source_names.get(source_key, source_key),
+            'status': 'empty',
+            'crawl_status': status.to_dict(),
+            'error': str(e),
+            'data': []
+        })
 
 
-def get_news_realtime(source_key, current_date, date_str):
-    """Original real-time crawling logic (fallback when DB is empty)."""
+def get_news_realtime(source_key, current_date, date_str, status=None):
+    """Original real-time crawling logic (fallback when DB is empty).
+    
+    Args:
+        source_key: Source identifier
+        current_date: datetime object
+        date_str: Date string in YYYY-MM-DD format
+        status: Optional SourceCrawlStatus object for tracking progress
+    """
     dates = {
         'yyyymm': current_date.strftime('%Y%m'),
         'yyyy-mm': current_date.strftime('%Y-%m'),
         'dd': current_date.strftime('%d'),
         'date_path': current_date.strftime('%Y%m/%d')
     }
+    
+    def log_message(msg):
+        """Helper to log both to logger and status"""
+        logger.info(f"[{source_key}] {msg}")
+        if status:
+            status.add_log(msg)
     
     session = requests.Session()
     session.headers.update({'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
@@ -472,13 +692,15 @@ def get_news_realtime(source_key, current_date, date_str):
         
         if source_key == 'fujian':
             source_name = "福建日报"
+            log_message(f"Starting to crawl Fujian Daily for {date_str}")
             root_url = f"https://fjrb.fjdaily.com/pc/col/{dates['date_path']}/"
             start_url = f"{root_url}node_01.html"
             
             # 1. Fetch first page to get the list of pages
             resp = session.get(start_url, timeout=10)
             if resp.status_code == 404:
-                 return jsonify({'source': source_name, 'status': 'success', 'data': []})
+                 log_message("No data available for this date (404)")
+                 return {'source': source_name, 'status': 'success', 'data': []}
                  
             resp.encoding = 'utf-8'
             soup = BeautifulSoup(resp.text, 'html.parser')
@@ -489,6 +711,7 @@ def get_news_realtime(source_key, current_date, date_str):
             # If no navigation found, fallback to just the start page
             if not page_links:
                 pages_to_fetch.append((start_url, "01 要闻"))
+                log_message("Found 1 page")
             else:
                 for link in page_links:
                     href = link.get('href')
@@ -496,15 +719,18 @@ def get_news_realtime(source_key, current_date, date_str):
                     if href:
                         abs_url = urllib.parse.urljoin(root_url, href)
                         pages_to_fetch.append((abs_url, text))
+                log_message(f"Found {len(pages_to_fetch)} pages")
 
         elif source_key == 'hainan':
             source_name = "海南日报"
+            log_message(f"Starting to crawl Hainan Daily for {date_str}")
             root_url = f"http://news.hndaily.cn/html/{dates['yyyy-mm']}/{dates['dd']}/"
             start_url = f"{root_url}node_1.htm"
             
             resp = session.get(start_url, timeout=10)
             if resp.status_code == 404:
-                 return jsonify({'source': source_name, 'status': 'success', 'data': []})
+                 log_message("No data available for this date (404)")
+                 return {'source': source_name, 'status': 'success', 'data': []}
 
             resp.encoding = 'utf-8'
             soup = BeautifulSoup(resp.text, 'html.parser')
@@ -514,6 +740,7 @@ def get_news_realtime(source_key, current_date, date_str):
             
             if not page_links:
                  pages_to_fetch.append((start_url, "第01版"))
+                 log_message("Found 1 page")
             else:
                 for link in page_links:
                     href = link.get('href')
@@ -522,13 +749,15 @@ def get_news_realtime(source_key, current_date, date_str):
                     if href and 'node' in href and not href.endswith('.pdf'):
                         abs_url = urllib.parse.urljoin(root_url, href)
                         pages_to_fetch.append((abs_url, text))
+                log_message(f"Found {len(pages_to_fetch)} pages")
 
         elif source_key == 'nanfang':
             source_name = "南方日报"
+            log_message(f"Starting to crawl Nanfang Daily for {date_str}")
             
             try:
                 # Use the verified parser from nanfang_live module
-                logging.info(f"Fetching Nanfang Daily for date: {current_date}")
+                log_message("Fetching sections A01-A08...")
                 
                 # Fetch core sections A01-A08 (要闻/广东/时政等主版面)
                 # A09/A10 are mostly supplements/ads and can cause SSL timeout issues
@@ -541,7 +770,7 @@ def get_news_realtime(source_key, current_date, date_str):
                         
                         # DEBUG: Log results for A01
                         if section_code == "A01":
-                            logging.info(f"Nanfang Daily A01: found {len(raw_articles)} articles via verified parser")
+                            log_message(f"Section {section_code}: found {len(raw_articles)} articles")
                         
                         # Convert to our format and translate
                         section_name = f"第{section_code}版"
@@ -561,26 +790,24 @@ def get_news_realtime(source_key, current_date, date_str):
                     except Exception as e:
                         # 404 is expected for non-existent sections
                         if "404" not in str(e):
-                            logging.error(f"Error fetching Nanfang section {section_code}: {e}")
+                            log_message(f"Error in section {section_code}: {str(e)[:50]}")
                         continue
                 
-                logging.info(f"Nanfang Daily: found {len(all_news_items)} articles (verified parser)")
+                log_message(f"✓ Completed: {len(all_news_items)} articles found")
                 
             except Exception as e:
-                logging.error(f"Error fetching Nanfang Daily: {e}")
+                log_message(f"✗ Crawl error: {str(e)[:100]}")
 
         elif source_key == 'guangzhou':
             source_name = "广州日报"
+            log_message(f"Starting to crawl Guangzhou Daily for {date_str}")
             
             try:
                 # Use PC version index - this is the stable, pure HTML page
                 index_url = gzdaily_index_url(current_date)
-                logging.info(f"Fetching Guangzhou Daily PC index: {index_url}")
+                log_message("Fetching index...")
                 
                 html = fetch_html(index_url)
-                
-                # DEBUG: Log first part of HTML to verify we got content
-                logging.info(f"GZDaily HTML first 300 chars: {html[:300]!r}")
                 
                 soup = BeautifulSoup(html, 'html.parser')
                 
@@ -603,7 +830,7 @@ def get_news_realtime(source_key, current_date, date_str):
                             abs_url = f"https://gzdaily.dayoo.com/pc/html/{date_path}/{section_href}"
                         section_map[abs_url] = section_text if section_text else "未知版面"
                 
-                logging.info(f"Found {len(section_map)} sections in Guangzhou Daily")
+                log_message(f"Found {len(section_map)} sections")
                 
                 # Now fetch each section page to get article titles
                 for section_url, section_name in section_map.items():
@@ -636,24 +863,24 @@ def get_news_realtime(source_key, current_date, date_str):
                                     'section': section_name
                                 })
                     except Exception as e:
-                        logging.error(f"Error fetching Guangzhou section {section_url}: {e}")
+                        log_message(f"Error in section: {str(e)[:50]}")
                         continue
                 
-                logging.info(f"Guangzhou Daily: found {len(all_news_items)} articles")
+                log_message(f"✓ Completed: {len(all_news_items)} articles found")
                 
             except Exception as e:
-                logging.error(f"Error fetching Guangzhou Daily PC index: {e}")
+                log_message(f"✗ Crawl error: {str(e)[:100]}")
 
         elif source_key == 'guangxi':
             source_name = "广西日报"
             base_url = "https://gxrb.gxrb.com.cn/"
             date_param = date_str if date_str else current_date.strftime('%Y-%m-%d')
             
+            log_message(f"Starting to crawl Guangxi Daily for {date_param}")
+            
             # Guangxi Daily: Fetch individual articles using Playwright
             # URL pattern: ?name=gxrb&date=YYYY-MM-DD&code=XXX&xuhao=N
             # code: section (001-009), xuhao: article number (1-10)
-            
-            logging.info(f"Fetching Guangxi Daily for date: {date_param}")
             
             for section_num in range(1, 10):  # Sections 001-009
                 code = f"{section_num:03d}"
@@ -662,21 +889,21 @@ def get_news_realtime(source_key, current_date, date_str):
                 articles_found_in_section = 0
                 consecutive_failures = 0
                 
+                log_message(f"Fetching section {code}...")
+                
                 for article_num in range(1, 11):  # Articles 1-10 per section
                     article_url = f"{base_url}?name=gxrb&date={date_param}&code={code}&xuhao={article_num}"
                     
                     try:
-                        logging.info(f"Fetching article: {code}-{article_num}")
                         article_data = fetch_guangxi_article_with_playwright(article_url)
                         
                         if not article_data or not article_data.get('title'):
                             # No article found at this position
                             consecutive_failures += 1
-                            logging.info(f"No article found at {code}-{article_num}")
                             
                             # If we've had 3 consecutive failures, assume no more articles in this section
                             if consecutive_failures >= 3:
-                                logging.info(f"3 consecutive failures in section {code}, moving to next section")
+                                log_message(f"No more articles in section {code}")
                                 break
                             continue
                         
@@ -687,7 +914,6 @@ def get_news_realtime(source_key, current_date, date_str):
                         
                         # Skip if title is too short or looks like navigation
                         if len(title) < 5:
-                            logging.info(f"Skipping article {code}-{article_num}: title too short")
                             continue
                         
                         # Translate title
@@ -701,28 +927,29 @@ def get_news_realtime(source_key, current_date, date_str):
                         })
                         
                         articles_found_in_section += 1
-                        logging.info(f"Successfully added article {code}-{article_num}: {title[:50]}...")
                         
                     except Exception as e:
-                        logging.error(f"Error fetching Guangxi article {code}-{article_num}: {e}")
+                        log_message(f"Error in article: {str(e)[:50]}")
                         consecutive_failures += 1
                         # Continue trying other articles even if one fails
                         if consecutive_failures >= 3:
-                            logging.info(f"Too many errors in section {code}, moving to next section")
+                            log_message(f"Too many errors in section {code}")
                             break
                         continue
                 
-                logging.info(f"Section {code} complete: found {articles_found_in_section} articles")
+                if articles_found_in_section > 0:
+                    log_message(f"Section {code}: {articles_found_in_section} articles")
                 
                 # Don't break - continue checking all sections even if some are empty
                 # Some sections might be empty but later sections could have content
             
-            logging.info(f"Guangxi Daily scraping complete: total {len(all_news_items)} articles found")
+            log_message(f"✓ Completed: {len(all_news_items)} articles found")
 
         else:
-            return jsonify({'error': 'Invalid source'}), 400
+            return {'error': 'Invalid source'}
             
         # 2. Fetch all pages concurrently
+        log_message(f"Fetching {len(pages_to_fetch)} pages with articles...")
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_url = {executor.submit(fetch_page_items, session, url, source_type=source_key, section_name=section): url for url, section in pages_to_fetch}
             for future in as_completed(future_to_url):
@@ -736,16 +963,16 @@ def get_news_realtime(source_key, current_date, date_str):
         for item in all_news_items:
             item['starred'] = item['link'] in STARRED_ITEMS
         
-        return jsonify({
+        return {
             'source': source_name,
             'status': 'success',
             'cached': False,
             'data': all_news_items
-        })
+        }
 
     except Exception as e:
         logging.error(f"Error fetching {source_key}: {e}")
-        return jsonify({'error': str(e)}), 500
+        return {'error': str(e)}
 
 
 # Admin API endpoints
